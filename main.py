@@ -1,7 +1,7 @@
 import sys
 
 from PyQt5 import uic
-from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget
+from PyQt5.QtWidgets import QApplication, QMainWindow
 from chat_client import ChatClient
 
 qt_ui = uic.loadUiType('main.ui')[0]
