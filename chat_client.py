@@ -1,4 +1,3 @@
-
 import sys
 
 from PyQt5 import uic
@@ -25,4 +24,3 @@ if __name__ == '__main__':
     main = MainWindow()
     main.show()
     app.exec()
-
