@@ -1,15 +1,13 @@
+import datetime
+import pymysql
 import socket
 import sys
 import threading
 
-import pymysql
-import datetime
-
-from threading import Thread
-from socket import *
-from select import *
 from PyQt5 import uic
-from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox, QLabel, QListWidget
+from PyQt5.QtWidgets import QApplication, QLabel, QMainWindow, QMessageBox
+from select import *
+from socket import *
 
 room_ui = uic.loadUiType('room.ui')[0]
 qt_ui = uic.loadUiType('main.ui')[0]
