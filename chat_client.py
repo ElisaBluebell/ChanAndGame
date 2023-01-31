@@ -97,6 +97,7 @@ class MainWindow(QMainWindow, qt_ui):
             execute_db(sql)
 
             self.chat_client.show()
+            self.show_room_list()
 
     # 빈 숫자 확인을 위한 함수, 매개변수(칼럼명, 시작값, 종료값)
     def empty_number_checker(self, item, start, end):
