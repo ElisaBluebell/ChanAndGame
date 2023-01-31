@@ -1,7 +1,7 @@
 import socket
 import sys
-
 import pymysql
+
 from PyQt5 import uic
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
 from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox
@@ -20,6 +20,7 @@ class MainWindow(QMainWindow, qt_ui):
         self.show_nickname()
 
         self.set_nickname.clicked.connect(self.setup_nickname)
+        self.make_room.clicked.connect(self.make_chat_room)
 
     def setup_nickname(self):
         if self.nickname_input.text() == '':
@@ -68,6 +69,9 @@ class MainWindow(QMainWindow, qt_ui):
 
         else:
             self.nickname.setText(f'{nickname}님, 환영합니다.')
+
+    def make_chat_room(self):
+        pass
 
 
 class ChatClient(QMainWindow, room_ui):
