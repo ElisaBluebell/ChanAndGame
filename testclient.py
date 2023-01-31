@@ -8,14 +8,13 @@ form_class = uic.loadUiType("main.ui")[0]
 ip = '10.10.21.108'
 port = 9000
 
+
 class WindowClass(QMainWindow, form_class):
     def __init__(self, sip, sport):
         super().__init__()
         self.setupUi(self)
 
         self.initialize_socket(sip, sport)
-
-        self.nickname.setText('')
 
         self.make_room.clicked.connect(self.roommake)
         self.set_nickname.clicked.connect(self.nickmake)
