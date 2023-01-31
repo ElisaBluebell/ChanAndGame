@@ -106,12 +106,12 @@ class MainWindow(QMainWindow, qt_ui):
             # i값과 동일한 번호가 없을 경우 i값 반환
             if checker == 0:
                 return i
+
     def check_have_room(self):
         sql = f'''SELECT 생성자 FROM chat'''
         temp = execute_db(sql)
 
         for room_maker in temp:
-            print(room_maker)
             if socket.gethostbyname(socket.gethostname()) == room_maker[0]:
                 return 1
 
