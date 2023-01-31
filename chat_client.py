@@ -18,6 +18,7 @@ class MainWindow(QMainWindow, qt_ui):
         self.chat_client = ChatClient()
 
         self.show_user_list()
+        self.show_room_list()
         self.show_nickname()
 
         self.set_nickname.clicked.connect(self.setup_nickname)
@@ -52,6 +53,16 @@ class MainWindow(QMainWindow, qt_ui):
             login_user.appendRow(QStandardItem(user[0]))
 
         self.accessor_list.setModel(login_user)
+
+    def show_room_list(self):
+        sql = 'SELECT DISTINCT 방번호, 생성자 FROM chat'
+        temp = execute_db(sql)
+
+        room_title = QStandardItemModel()
+        for data in temp:
+            room_title.appendRow(QStandardItem(f'{data[1]}님의 방'))
+
+        self.room_list.setModel(room_title)
 
     def show_nickname(self):
         nickname = ''
@@ -107,14 +118,15 @@ class MainWindow(QMainWindow, qt_ui):
             if checker == 0:
                 return i
 
+    # 방 개설 여부 확인
     def check_have_room(self):
+        # 생성자 IP 정보를 DB에서 받아와서 현재 접속 IP와 대조함, 일치시 1, 일치하는 값 없을 시 0 반환
         sql = f'''SELECT 생성자 FROM chat'''
         temp = execute_db(sql)
 
         for room_maker in temp:
             if socket.gethostbyname(socket.gethostname()) == room_maker[0]:
                 return 1
-
         return 0
 
 
