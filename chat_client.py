@@ -143,11 +143,16 @@ class MainWindow(QMainWindow, qt_ui):
         return 0
 
     def enter_chat_room(self):
-        user_name = self.room_list.currentItem().text().split('님의 방')[0]
-        # 아직 IP로 표시되기 때문에 유저명이 아닌 IP를 일단 불러옴
-        sql = f'SELECT port FROM chat WHERE 생성자="{user_name}"'
-        port = execute_db(sql)[0][0]
-        print(port)
+        reply = QMessageBox.question(self, '입장 확인', '채팅방에 입장 하시겠습니까?', QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+        if reply == QMessageBox.Yes:
+            user_name = self.room_list.currentItem().text().split('님의 방')[0]
+            # 아직 IP로 표시되기 때문에 유저명이 아닌 IP를 일단 불러옴
+            sql = f'SELECT port FROM chat WHERE 생성자="{user_name}"'
+            port = execute_db(sql)[0][0]
+            self.chat_client.show()
+
+        else:
+            pass
 
 
 class ChatClient(QMainWindow, room_ui):
