@@ -32,21 +32,34 @@ class MainWindow(QMainWindow, qt_ui):
             QMessageBox.warning(self, '닉네임 미기입', '닉네임을 입력하세요.')
 
         else:
-            # 내 IP에 해당하는 닉네임과 상태 정보 삭제
-            sql = f'DELETE FROM state WHERE ip="{socket.gethostbyname(socket.gethostname())}"'
-            execute_db(sql)
+            if self.check_nickname_exist() == 1:
+                QMessageBox.warning(self, '닉네임 중복', '이미 존재하는 닉네임입니다.')
 
-            # 내 IP에 해당하는 닉네임과 상태 정보 생성
-            sql = f'''INSERT INTO state VALUES ("{socket.gethostbyname(socket.gethostname())}", 
-            "{self.nickname_input.text()}", "1")'''
-            execute_db(sql)
+            else:
+                # 내 IP에 해당하는 닉네임과 상태 정보 삭제
+                sql = f'DELETE FROM state WHERE ip="{socket.gethostbyname(socket.gethostname())}"'
+                execute_db(sql)
+
+                # 내 IP에 해당하는 닉네임과 상태 정보 생성
+                sql = f'''INSERT INTO state VALUES ("{socket.gethostbyname(socket.gethostname())}", 
+                "{self.nickname_input.text()}", "1")'''
+                execute_db(sql)
 
         self.nickname_input.clear()
         self.show_user_list()
         self.show_nickname()
 
+    def check_nickname_exist(self):
+        sql = 'SELECT 닉네임 FROM state'
+        temp = execute_db(sql)
+        for i in range(len(temp)):
+            if self.nickname_input.text() == temp[i][0]:
+                return 1
+        return 0
+
     # DB에서 현재 상태가 1(로그인이라고 가정)인 유저들을 불러와서 accessor_list에 출력함
     def show_user_list(self):
+        self.accessor_list.clear()
         sql = 'SELECT 닉네임 FROM state WHERE 상태="1"'
         login_user_list = execute_db(sql)
 
@@ -54,6 +67,7 @@ class MainWindow(QMainWindow, qt_ui):
             self.accessor_list.insertItem(i, login_user_list[i][0])
 
     def show_room_list(self):
+        self.room_list.clear()
         sql = 'SELECT DISTINCT 방번호, 생성자 FROM chat'
         temp = execute_db(sql)
 
@@ -129,7 +143,11 @@ class MainWindow(QMainWindow, qt_ui):
         return 0
 
     def enter_chat_room(self):
-        print(self.room_list.currentItem().text().split('님의 방')[0])
+        user_name = self.room_list.currentItem().text().split('님의 방')[0]
+        # 아직 IP로 표시되기 때문에 유저명이 아닌 IP를 일단 불러옴
+        sql = f'SELECT port FROM chat WHERE 생성자="{user_name}"'
+        port = execute_db(sql)[0][0]
+        print(port)
 
 
 class ChatClient(QMainWindow, room_ui):
