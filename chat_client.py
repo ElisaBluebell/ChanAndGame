@@ -1,6 +1,7 @@
 import socket
 import sys
 import pymysql
+import datetime
 
 from PyQt5 import uic
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
@@ -68,10 +69,39 @@ class MainWindow(QMainWindow, qt_ui):
             self.nickname.setText('닉네임을 설정해주세요.')
 
         else:
-            self.nickname.setText(f'{nickname}님, 환영합니다.')
+            self.nickname.setText(f'{nickname}')
 
     def make_chat_room(self):
+        # 빈 방 체크
+        empty_room_number = self.empty_number_checker('방번호', 1, 100)
+        empty_port = self.empty_number_checker('port', 55000, 55100)
+
+        sql = f'''INSERT INTO chat VALUES ({empty_room_number}, "{self.nickname.text()}", 
+        "{str(datetime.datetime.now())[:-7]}", "님이 채팅방을 생성하였습니다.", 
+        "{socket.gethostbyname(socket.gethostname())}", "{empty_port}")'''
+        execute_db(sql)
+
         self.chat_client.show()
+
+    # 빈 숫자 확인을 위한 함수, 매개변수(칼럼명, 시작값, 종료값)
+    def empty_number_checker(self, item, start, end):
+        sql = f'SELECT {item} FROM chat'
+        number_list = execute_db(sql)
+
+        # 시작값부터 종료값까지 반복문을 실행해 중간에 비어있는 값을 찾는다.
+        for i in range(start, end):
+            # 번호 확인을 위한 변수 선언
+            checker = 0
+
+            # DB에서 받아온 번호가 i값과 같을 시 반복문 정지
+            for number in number_list:
+                if number[0] == i:
+                    checker = 1
+                    break
+
+            # i값과 동일한 번호가 없을 경우 i값 반환
+            if checker == 0:
+                return i
 
 
 class ChatClient(QMainWindow, room_ui):
