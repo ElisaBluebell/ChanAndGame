@@ -5,7 +5,7 @@ import datetime
 
 from PyQt5 import uic
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
-from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox
+from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox, QLabel, QListView, QListWidget
 
 room_ui = uic.loadUiType('room.ui')[0]
 qt_ui = uic.loadUiType('main.ui')[0]
@@ -15,13 +15,17 @@ class MainWindow(QMainWindow, qt_ui):
     def __init__(self):
         super().__init__()
         self.setupUi(self)
+        self.welcome = QLabel(self)
+
         self.chat_client = ChatClient()
 
         self.show_user_list()
+        self.show_room_list()
         self.show_nickname()
 
         self.set_nickname.clicked.connect(self.setup_nickname)
         self.make_room.clicked.connect(self.make_chat_room)
+        self.room_list.clicked.connect(self.enter_chat_room)
 
     def setup_nickname(self):
         if self.nickname_input.text() == '':
@@ -46,12 +50,15 @@ class MainWindow(QMainWindow, qt_ui):
         sql = 'SELECT 닉네임 FROM state WHERE 상태="1"'
         login_user_list = execute_db(sql)
 
-        login_user = QStandardItemModel()
+        for i in range(len(login_user_list)):
+            self.accessor_list.insertItem(i, login_user_list[i][0])
 
-        for user in login_user_list:
-            login_user.appendRow(QStandardItem(user[0]))
+    def show_room_list(self):
+        sql = 'SELECT DISTINCT 방번호, 생성자 FROM chat'
+        temp = execute_db(sql)
 
-        self.accessor_list.setModel(login_user)
+        for i in range(len(temp)):
+            self.room_list.insertItem(i, f'{temp[i][1]}님의 방')
 
     def show_nickname(self):
         nickname = ''
@@ -70,6 +77,8 @@ class MainWindow(QMainWindow, qt_ui):
 
         else:
             self.nickname.setText(f'{nickname}')
+            self.welcome.setText('님 환영합니다.')
+            self.welcome.setGeometry(len(nickname) * 12 + 710, 10, 85, 16)
 
     def make_chat_room(self):
         if self.check_have_room() == 1:
@@ -86,6 +95,7 @@ class MainWindow(QMainWindow, qt_ui):
             execute_db(sql)
 
             self.chat_client.show()
+            self.show_room_list()
 
     # 빈 숫자 확인을 위한 함수, 매개변수(칼럼명, 시작값, 종료값)
     def empty_number_checker(self, item, start, end):
@@ -107,16 +117,22 @@ class MainWindow(QMainWindow, qt_ui):
             if checker == 0:
                 return i
 
+    # 방 개설 여부 확인
     def check_have_room(self):
+        # 생성자 IP 정보를 DB에서 받아와서 현재 접속 IP와 대조함, 일치시 1, 일치하는 값 없을 시 0 반환
         sql = f'''SELECT 생성자 FROM chat'''
         temp = execute_db(sql)
 
         for room_maker in temp:
             if socket.gethostbyname(socket.gethostname()) == room_maker[0]:
                 return 1
-
         return 0
 
+    def enter_chat_room(self):
+        pass
+        # self.sample = QListWidget
+        # print(self.room_list.currentItem.text())
+        # print(self.sample.)
 
 class ChatClient(QMainWindow, room_ui):
     def __init__(self):
