@@ -46,7 +46,7 @@
     &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable&quot;
   }
 }</component>
-  <component name="RunManager" selected="Python.test">
+  <component name="RunManager" selected="Python.chat_client">
     <configuration default="true" type="PythonConfigurationType" factoryName="Python">
       <module name="ChanAndGame" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -250,8 +250,8 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.test" />
         <item itemvalue="Python.chat_client" />
+        <item itemvalue="Python.test" />
         <item itemvalue="Python.chat_server" />
         <item itemvalue="Python.new" />
         <item itemvalue="Python.test (1)" />
@@ -449,7 +449,14 @@
       <option name="project" value="LOCAL" />
       <updated>1675142804933</updated>
     </task>
-    <option name="localTasksCounter" value="27" />
+    <task id="LOCAL-00027" summary="room.ui 수정">
+      <created>1675144237482</created>
+      <option name="number" value="00027" />
+      <option name="presentableId" value="LOCAL-00027" />
+      <option name="project" value="LOCAL" />
+      <updated>1675144237482</updated>
+    </task>
+    <option name="localTasksCounter" value="28" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -467,6 +474,7 @@
     <MESSAGE value="ElisaBluebell" />
     <MESSAGE value="230130 ElisaBluebell" />
     <MESSAGE value="230131 ElisaBluebell" />
-    <option name="LAST_COMMIT_MESSAGE" value="230131 ElisaBluebell" />
+    <MESSAGE value="room.ui 수정" />
+    <option name="LAST_COMMIT_MESSAGE" value="room.ui 수정" />
   </component>
 </project>

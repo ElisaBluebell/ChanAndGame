@@ -270,7 +270,7 @@
      <string>참여자보기</string>
     </property>
    </widget>
-   <widget class="QPushButton" name="pushButton">
+   <widget class="QPushButton" name="game_start">
     <property name="geometry">
      <rect>
       <x>260</x>
@@ -294,7 +294,7 @@
    <zorder>line_2</zorder>
    <zorder>invite</zorder>
    <zorder>member</zorder>
-   <zorder>pushButton</zorder>
+   <zorder>game_start</zorder>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
