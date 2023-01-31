@@ -3,7 +3,8 @@ import sys
 
 import pymysql
 from PyQt5 import uic
-from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox, QLineEdit
+from PyQt5.QtGui import QStandardItemModel, QStandardItem
+from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox, QLineEdit, QListView
 
 room_ui = uic.loadUiType('room.ui')[0]
 qt_ui = uic.loadUiType('main.ui')[0]
@@ -15,6 +16,8 @@ class MainWindow(QMainWindow, qt_ui):
         self.setupUi(self)
         self.chat_client = ChatClient()
 
+        self.show_user_list()
+
         self.set_nickname.clicked.connect(self.setup_nickname)
 
     def setup_nickname(self):
@@ -23,20 +26,32 @@ class MainWindow(QMainWindow, qt_ui):
 
         else:
             sql = f'DELETE FROM state WHERE ip="{socket.gethostbyname(socket.gethostname())}"'
-            db_run(sql)
+            execute_db(sql)
 
             sql = f'''INSERT INTO state VALUES ("{socket.gethostbyname(socket.gethostname())}", 
             "{self.nickname_input.text()}", "1")'''
-            db_run(sql)
+            execute_db(sql)
 
         self.nickname_input.clear()
+        self.show_user_list()
+
+    def show_user_list(self):
+        sql = 'SELECT 닉네임 FROM state WHERE 상태="1"'
+        login_user_list = execute_db(sql)
+
+        login_user = QStandardItemModel()
+
+        for user in login_user_list:
+            login_user.appendRow(QStandardItem(user[0]))
+
+        self.accessor_list.setModel(login_user)
 
 class ChatClient(QMainWindow, room_ui):
     def __init__(self):
         super().__init__()
 
 
-def db_run(sql):
+def execute_db(sql):
     conn = pymysql.connect(user='elisa', password='0000', host='10.10.21.108', port = 3306, database='chatandgame')
     c = conn.cursor()
 
