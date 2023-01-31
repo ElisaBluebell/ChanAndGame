@@ -100,7 +100,7 @@ class MainWindow(QMainWindow, qt_ui):
         else:
             # 빈 방 체크
             empty_room_number = self.empty_number_checker('방번호', 1, 100)
-            empty_port = self.empty_number_checker('port', 9000, 9100)
+            empty_port = self.empty_number_checker('port', 9001, 9100)
 
             sql = f'''INSERT INTO chat VALUES ({empty_room_number}, "{self.nickname.text()}", 
             "{str(datetime.datetime.now())[:-7]}", "님이 채팅방을 생성하였습니다.", 
@@ -148,6 +148,7 @@ class MainWindow(QMainWindow, qt_ui):
             # 아직 IP로 표시되기 때문에 유저명이 아닌 IP를 일단 불러옴
             sql = f'SELECT port FROM chat WHERE 생성자="{user_name}";'
             port = execute_db(sql)[0][0]
+            self.chat_client.setup_chatroom()
             self.chat_client.show()
 
         else:
@@ -158,7 +159,6 @@ class ChatClient(QMainWindow, room_ui):
     def __init__(self):
         super().__init__()
         self.setupUi(self)
-        self.setup_chatroom()
 
     def setup_chatroom(self):
         self.chat_list.clear()
@@ -166,12 +166,22 @@ class ChatClient(QMainWindow, room_ui):
         self.load_chat()
 
     def load_chat(self):
+        self.room_create_info()
+        self.insert_recent_chat()
+
+    def room_create_info(self):
         # 통신 미적용으로 인해 임의로 9000번 포트 줌
         sql = 'SELECT * FROM chat WHERE port=9000 LIMIT 1;'
         chat_log = execute_db(sql)
-        print(chat_log)
-        # self.chat_list = QListWidget
-        self.chat_list.insertItem(0, f'[{chat_log[0][2]}]에 {chat_log[0][1]}{chat_log[0][3]}')
+        self.chat_list.insertItem(0, f'[{chat_log[0][2][:-3]}]{chat_log[0][1]}{chat_log[0][3]}')
+
+    def insert_recent_chat(self):
+        row = 0
+        self.chat_list = QListWidget(self)
+        sql = 'SELECT * FROM chat WHERE port=9000 ORDER BY 시간 DESC LIMIT 5;'
+        temp = execute_db(sql)
+        for i in range(len(temp), 0, -1):
+            self.chat_list.insertItem(row, f'{temp[i]}')
 
     def show_user(self):
         pass
