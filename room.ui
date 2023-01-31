@@ -89,7 +89,7 @@
      </rect>
     </property>
     <property name="currentIndex">
-     <number>0</number>
+     <number>1</number>
     </property>
     <widget class="QWidget" name="page">
      <widget class="QLineEdit" name="answer">
@@ -270,6 +270,19 @@
      <string>참여자보기</string>
     </property>
    </widget>
+   <widget class="QPushButton" name="game_start">
+    <property name="geometry">
+     <rect>
+      <x>260</x>
+      <y>10</y>
+      <width>75</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>게임시작</string>
+    </property>
+   </widget>
    <zorder>stackedWidget_2</zorder>
    <zorder>label</zorder>
    <zorder>subject</zorder>
@@ -281,6 +294,7 @@
    <zorder>line_2</zorder>
    <zorder>invite</zorder>
    <zorder>member</zorder>
+   <zorder>game_start</zorder>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
