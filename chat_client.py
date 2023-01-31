@@ -72,16 +72,20 @@ class MainWindow(QMainWindow, qt_ui):
             self.nickname.setText(f'{nickname}')
 
     def make_chat_room(self):
-        # 빈 방 체크
-        empty_room_number = self.empty_number_checker('방번호', 1, 100)
-        empty_port = self.empty_number_checker('port', 55000, 55100)
+        if self.check_have_room() == 1:
+            QMessageBox.information(self, '생성 불가', '이미 생성된 방이 있습니다.')
 
-        sql = f'''INSERT INTO chat VALUES ({empty_room_number}, "{self.nickname.text()}", 
-        "{str(datetime.datetime.now())[:-7]}", "님이 채팅방을 생성하였습니다.", 
-        "{socket.gethostbyname(socket.gethostname())}", "{empty_port}")'''
-        execute_db(sql)
+        else:
+            # 빈 방 체크
+            empty_room_number = self.empty_number_checker('방번호', 1, 100)
+            empty_port = self.empty_number_checker('port', 55000, 55100)
 
-        self.chat_client.show()
+            sql = f'''INSERT INTO chat VALUES ({empty_room_number}, "{self.nickname.text()}", 
+            "{str(datetime.datetime.now())[:-7]}", "님이 채팅방을 생성하였습니다.", 
+            "{socket.gethostbyname(socket.gethostname())}", "{empty_port}")'''
+            execute_db(sql)
+
+            self.chat_client.show()
 
     # 빈 숫자 확인을 위한 함수, 매개변수(칼럼명, 시작값, 종료값)
     def empty_number_checker(self, item, start, end):
@@ -102,6 +106,16 @@ class MainWindow(QMainWindow, qt_ui):
             # i값과 동일한 번호가 없을 경우 i값 반환
             if checker == 0:
                 return i
+
+    def check_have_room(self):
+        sql = f'''SELECT 생성자 FROM chat'''
+        temp = execute_db(sql)
+
+        for room_maker in temp:
+            if socket.gethostbyname(socket.gethostname()) == room_maker[0]:
+                return 1
+
+        return 0
 
 
 class ChatClient(QMainWindow, room_ui):
