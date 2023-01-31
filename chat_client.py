@@ -5,7 +5,7 @@ import datetime
 
 from PyQt5 import uic
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
-from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox
+from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox, QLabel
 
 room_ui = uic.loadUiType('room.ui')[0]
 qt_ui = uic.loadUiType('main.ui')[0]
@@ -15,6 +15,8 @@ class MainWindow(QMainWindow, qt_ui):
     def __init__(self):
         super().__init__()
         self.setupUi(self)
+        self.welcome = QLabel(self)
+
         self.chat_client = ChatClient()
 
         self.show_user_list()
@@ -81,6 +83,8 @@ class MainWindow(QMainWindow, qt_ui):
 
         else:
             self.nickname.setText(f'{nickname}')
+            self.welcome.setText('님 환영합니다.')
+            self.welcome.setGeometry(len(nickname) * 12 + 710, 10, 85, 16)
 
     def make_chat_room(self):
         if self.check_have_room() == 1:
