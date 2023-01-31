@@ -71,12 +71,31 @@ class MainWindow(QMainWindow, qt_ui):
             self.nickname.setText(f'{nickname}님, 환영합니다.')
 
     def make_chat_room(self):
-        pass
+        self.chat_client.show()
 
 
 class ChatClient(QMainWindow, room_ui):
     def __init__(self):
         super().__init__()
+        self.setupUi(self)
+
+    def setup_chatroom(self):
+        pass
+
+    def connect_server(self):
+        pass
+
+    def invite_user(self):
+        pass
+
+    def receive_chat(self):
+        pass
+
+    def send_chat(self):
+        pass
+
+    def show_user(self):
+        pass
 
 
 # DB 작업
