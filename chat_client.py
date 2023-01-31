@@ -26,9 +26,11 @@ class MainWindow(QMainWindow, qt_ui):
             QMessageBox.warning(self, '닉네임 미기입', '닉네임을 입력하세요.')
 
         else:
+            # 내 IP에 해당하는 닉네임과 상태 정보 삭제
             sql = f'DELETE FROM state WHERE ip="{socket.gethostbyname(socket.gethostname())}"'
             execute_db(sql)
 
+            # 내 IP에 해당하는 닉네임과 상태 정보 생성
             sql = f'''INSERT INTO state VALUES ("{socket.gethostbyname(socket.gethostname())}", 
             "{self.nickname_input.text()}", "1")'''
             execute_db(sql)
@@ -37,6 +39,7 @@ class MainWindow(QMainWindow, qt_ui):
         self.show_user_list()
         self.show_nickname()
 
+    # DB에서 현재 상태가 1(로그인이라고 가정)인 유저들을 불러와서 accessor_list에 출력함
     def show_user_list(self):
         sql = 'SELECT 닉네임 FROM state WHERE 상태="1"'
         login_user_list = execute_db(sql)
@@ -52,6 +55,7 @@ class MainWindow(QMainWindow, qt_ui):
         nickname = ''
 
         try:
+            # 내 IP에 해당하는 닉네임을 DB에서 불러옴
             sql = f'SELECT 닉네임 FROM state WHERE IP="{socket.gethostbyname(socket.gethostname())}"'
             nickname = execute_db(sql)[0][0]
 
