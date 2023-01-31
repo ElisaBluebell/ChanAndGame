@@ -112,7 +112,7 @@
      </rect>
     </property>
     <property name="text">
-     <string>(닉네임을 설정해 주세요)</string>
+     <string/>
     </property>
    </widget>
   </widget>
