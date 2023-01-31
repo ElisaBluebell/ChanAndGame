@@ -5,7 +5,7 @@ import datetime
 
 from PyQt5 import uic
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
-from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox, QLabel
+from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox, QLabel, QListView, QListWidget
 
 room_ui = uic.loadUiType('room.ui')[0]
 qt_ui = uic.loadUiType('main.ui')[0]
@@ -25,6 +25,7 @@ class MainWindow(QMainWindow, qt_ui):
 
         self.set_nickname.clicked.connect(self.setup_nickname)
         self.make_room.clicked.connect(self.make_chat_room)
+        self.room_list.clicked.connect(self.enter_chat_room)
 
     def setup_nickname(self):
         if self.nickname_input.text() == '':
@@ -49,22 +50,15 @@ class MainWindow(QMainWindow, qt_ui):
         sql = 'SELECT 닉네임 FROM state WHERE 상태="1"'
         login_user_list = execute_db(sql)
 
-        login_user = QStandardItemModel()
-
-        for user in login_user_list:
-            login_user.appendRow(QStandardItem(user[0]))
-
-        self.accessor_list.setModel(login_user)
+        for i in range(len(login_user_list)):
+            self.accessor_list.insertItem(i, login_user_list[i][0])
 
     def show_room_list(self):
         sql = 'SELECT DISTINCT 방번호, 생성자 FROM chat'
         temp = execute_db(sql)
 
-        room_title = QStandardItemModel()
-        for data in temp:
-            room_title.appendRow(QStandardItem(f'{data[1]}님의 방'))
-
-        self.room_list.setModel(room_title)
+        for i in range(len(temp)):
+            self.room_list.insertItem(i, f'{temp[i][1]}님의 방')
 
     def show_nickname(self):
         nickname = ''
@@ -134,6 +128,11 @@ class MainWindow(QMainWindow, qt_ui):
                 return 1
         return 0
 
+    def enter_chat_room(self):
+        pass
+        # self.sample = QListWidget
+        # print(self.room_list.currentItem.text())
+        # print(self.sample.)
 
 class ChatClient(QMainWindow, room_ui):
     def __init__(self):
