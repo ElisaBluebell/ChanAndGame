@@ -3,6 +3,8 @@ import sys
 import pymysql
 import datetime
 
+from socket import *
+from select import *
 from PyQt5 import uic
 from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox, QLabel, QListWidget
 
@@ -17,14 +19,34 @@ class MainWindow(QMainWindow, qt_ui):
         self.welcome = QLabel(self)
 
         self.chat_client = ''
+        self.sock = socket()
+        self.socks = []
 
         self.show_user_list()
         self.show_room_list()
-        self.show_nickname()
+        # self.show_nickname()
 
         self.set_nickname.clicked.connect(self.setup_nickname)
         self.make_room.clicked.connect(self.make_chat_room)
         self.room_list.clicked.connect(self.enter_chat_room)
+
+        self.connect_to_main_server()
+
+    def connect_to_main_server(self):
+        self.sock.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
+
+        self.socks.append(self.sock)
+        self.sock.connect(('10.10.21.121', 9000))
+        self.print_msg()
+
+    def print_msg(self):
+        while True:
+            r_sock, w_sock, e_sock = select(self.socks, [], [], 0)
+            if r_sock:
+                for s in r_sock:
+                    if s == self.sock:
+                        msg = self.sock.recv(1024).decode()
+                        print(msg)
 
     def setup_nickname(self):
         if self.nickname_input.text() == '':
@@ -35,6 +57,7 @@ class MainWindow(QMainWindow, qt_ui):
                 QMessageBox.warning(self, '닉네임 중복', '이미 존재하는 닉네임입니다.')
 
             else:
+                msg = f'/set_nickname, {self.nickname_input.text()}'
                 # 내 IP에 해당하는 닉네임과 상태 정보 삭제
                 sql = f'DELETE FROM state WHERE ip="{socket.gethostbyname(socket.gethostname())}";'
                 execute_db(sql)
@@ -46,7 +69,7 @@ class MainWindow(QMainWindow, qt_ui):
 
         self.nickname_input.clear()
         self.show_user_list()
-        self.show_nickname()
+        # self.show_nickname()
 
     def check_nickname_exist(self):
         sql = 'SELECT 닉네임 FROM state;'
@@ -73,25 +96,25 @@ class MainWindow(QMainWindow, qt_ui):
         for i in range(len(temp)):
             self.room_list.insertItem(i, f'{temp[i][1]}님의 방')
 
-    def show_nickname(self):
-        nickname = ''
-
-        try:
-            # 내 IP에 해당하는 닉네임을 DB에서 불러옴
-            sql = f'SELECT 닉네임 FROM state WHERE IP="{socket.gethostbyname(socket.gethostname())}";'
-            nickname = execute_db(sql)[0][0]
-
-        # DB에 데이터가 없을 경우 무시하고 진행
-        except IndexError:
-            pass
-
-        if not nickname:
-            self.nickname.setText('닉네임을 설정해주세요.')
-
-        else:
-            self.nickname.setText(f'{nickname}')
-            self.welcome.setText('님 환영합니다.')
-            self.welcome.setGeometry(len(nickname) * 12 + 710, 10, 85, 16)
+    # def show_nickname(self):
+    #     nickname = ''
+    #
+    #     try:
+    #         # 내 IP에 해당하는 닉네임을 DB에서 불러옴
+    #         sql = f'SELECT 닉네임 FROM state WHERE IP="{socket.gethostbyname(socket.gethostname())}";'
+    #         nickname = execute_db(sql)[0][0]
+    #
+    #     # DB에 데이터가 없을 경우 무시하고 진행
+    #     except IndexError:
+    #         pass
+    #
+    #     if not nickname:
+    #         self.nickname.setText('닉네임을 설정해주세요.')
+    #
+    #     else:
+    #         self.nickname.setText(f'{nickname}')
+    #         self.welcome.setText('님 환영합니다.')
+    #         self.welcome.setGeometry(len(nickname) * 12 + 710, 10, 85, 16)
 
     def make_chat_room(self):
         if self.check_have_room() == 1:

@@ -29,14 +29,13 @@ while True:
                     s.send(data)
 
                 if not data:
-                    print(f'Client{addr} is offline')
+                    print(f'Client{s.getpeername()} is offline')
                     s.close()
-                    print(sock_list)
                     sock_list.remove(s)
                     continue
 
             except:
-                print(f'Client{addr} is offline')
+                print(f'Client{s.getpeername()} is offline')
                 s.close()
                 sock_list.remove(s)
                 continue
