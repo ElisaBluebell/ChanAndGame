@@ -3,7 +3,7 @@ import select
 
 sock_list = []
 BUFFER = 1024
-port = 2500
+port = 9000
 
 # TCP 소켓
 s_sock = socket.socket()
