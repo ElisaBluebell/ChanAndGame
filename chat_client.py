@@ -71,16 +71,20 @@ class ChatClient(QMainWindow, room_ui):
         super().__init__()
 
 
+# DB 작업
 def execute_db(sql):
     conn = pymysql.connect(user='elisa', password='0000', host='10.10.21.108', port = 3306, database='chatandgame')
     c = conn.cursor()
 
+    # 인수로 받아온 쿼리문에 해당하는 작업 수행
     c.execute(sql)
+    # 커밋
     conn.commit()
 
     c.close()
     conn.close()
 
+    # 결과 반환
     return c.fetchall()
 
 

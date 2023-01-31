@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="12a35f88-34b3-481c-9af1-3bacfbe34dfa" name="Changes" comment="230130 ElisaBluebell">
+    <list default="true" id="12a35f88-34b3-481c-9af1-3bacfbe34dfa" name="Changes" comment="230131 ElisaBluebell">
       <change beforePath="$PROJECT_DIR$/chat_client.py" beforeDir="false" afterPath="$PROJECT_DIR$/chat_client.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -242,7 +242,14 @@
       <option name="project" value="LOCAL" />
       <updated>1675128756601</updated>
     </task>
-    <option name="localTasksCounter" value="12" />
+    <task id="LOCAL-00012" summary="230131 ElisaBluebell">
+      <created>1675128816414</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1675128816414</updated>
+    </task>
+    <option name="localTasksCounter" value="13" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -259,6 +266,7 @@
   <component name="VcsManagerConfiguration">
     <MESSAGE value="ElisaBluebell" />
     <MESSAGE value="230130 ElisaBluebell" />
-    <option name="LAST_COMMIT_MESSAGE" value="230130 ElisaBluebell" />
+    <MESSAGE value="230131 ElisaBluebell" />
+    <option name="LAST_COMMIT_MESSAGE" value="230131 ElisaBluebell" />
   </component>
 </project>
