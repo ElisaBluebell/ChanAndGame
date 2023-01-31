@@ -87,7 +87,7 @@ class MainWindow(QMainWindow, qt_ui):
         else:
             # 빈 방 체크
             empty_room_number = self.empty_number_checker('방번호', 1, 100)
-            empty_port = self.empty_number_checker('port', 55000, 55100)
+            empty_port = self.empty_number_checker('port', 9000, 9100)
 
             sql = f'''INSERT INTO chat VALUES ({empty_room_number}, "{self.nickname.text()}", 
             "{str(datetime.datetime.now())[:-7]}", "님이 채팅방을 생성하였습니다.", 
@@ -129,10 +129,8 @@ class MainWindow(QMainWindow, qt_ui):
         return 0
 
     def enter_chat_room(self):
-        pass
-        # self.sample = QListWidget
-        # print(self.room_list.currentItem.text())
-        # print(self.sample.)
+        print(self.room_list.currentItem().text().split('님의 방')[0])
+
 
 class ChatClient(QMainWindow, room_ui):
     def __init__(self):
