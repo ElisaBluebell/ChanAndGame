@@ -4,7 +4,7 @@ import sys
 import pymysql
 from PyQt5 import uic
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
-from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox, QLineEdit, QListView, QLabel
+from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox
 
 room_ui = uic.loadUiType('room.ui')[0]
 qt_ui = uic.loadUiType('main.ui')[0]
