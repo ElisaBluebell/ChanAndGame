@@ -65,8 +65,9 @@ class MainServer:
                             message = eval(data)
                             # 명령 실행 함수로 이동(송신자와, 데이터를 가지고)
                             self.command_processor(s.getpeername()[0], message, s)
-                            # 수신한 데이터 에코
-                            s.send(data.encode())
+                            # # 수신한 명령 에코
+                            # command_taken = json.dumps(['the last command was' + message[0], message[1]])
+                            # s.send(command_taken.encode())
 
                         # 유언을 받은 경우
                         if not data:
@@ -98,9 +99,15 @@ class MainServer:
         content = message[1]
 
         # 커맨드에 해당하는 명령 실행
-        if command == '/set_nickname':
+        if command == '/setup_nickname':
             # DB상 클라이언트 닉네임 변경
-            self.set_client_nickname(user_ip, content, s)
+            self.setup_nickname(user_ip, content, s)
+
+        elif command == '/check_nickname_exist':
+            self.check_nickname_exist(content, s)
+
+        elif command == '/get_main_user_list':
+            self.get_main_user_list(s)
 
     def set_client_default(self, c_sock, ip):
         # 접속한 유저의 DB상 포트 번호(현재 상태)를 9000번(메인 접속, 기본)으로 변경
@@ -118,14 +125,34 @@ class MainServer:
 
     def set_client_nickname_label(self, c_sock, ip):
         sql = f'SELECT 닉네임 FROM state WHERE ip="{ip}"'
-        nickname = self.execute_db(sql)[0][0]
+        try:
+            nickname = self.execute_db(sql)[0][0]
+
+        # DB에 등록된 닉네임이 없어 IndexError가 뜰 경우 nickname은 ''으로 설정해서 전송
+        except IndexError:
+            nickname = ''
 
         # 닉네임 라벨 설정을 명령하는 메세지 설정
         data = json.dumps(['/set_nickname_label', nickname])
         # 자료형 변환하여 전송
         c_sock.send(data.encode())
 
-    def set_client_nickname(self, user_ip, nickname, s):
+    def check_nickname_exist(self, nickname, s):
+        checker = 0
+        sql = 'SELECT 닉네임 FROM state;'
+        temp = self.execute_db(sql)
+
+        for i in range(len(temp)):
+            if nickname == temp[i][0]:
+                data = json.dumps(['/nickname_exists', ''])
+                s.send(data.encode())
+                checker = 1
+
+        if checker == 0:
+            data = json.dumps(['/setup_nickname', nickname])
+            s.send(data.encode())
+
+    def setup_nickname(self, user_ip, nickname, s):
         # 유저 IP에 해당하는 닉네임과 상태 정보 삭제
         self.delete_nickname_from_database(user_ip)
 
@@ -133,8 +160,8 @@ class MainServer:
         self.create_nickname_in_database(user_ip, nickname)
 
         # 닉네임 세팅 종료를 알리는 메세지 설정 및 전송
-        message = json.dumps(['/set_nickname_complete', nickname])
-        s.send(message.encode())
+        data = json.dumps(['/set_nickname_complete', nickname])
+        s.send(data.encode())
 
     def delete_nickname_from_database(self, user_ip):
         sql = f'DELETE FROM state WHERE ip="{user_ip}";'
@@ -146,6 +173,24 @@ class MainServer:
 
     def send_message(self):
         pass
+
+    def get_main_user_list(self, s):
+        sql = 'SELECT 닉네임 FROM state WHERE port=9000;'
+        temp = self.execute_db(sql)
+        login_user_list = self.array_user_list(temp)
+        self.send_main_user_list(login_user_list, s)
+
+    def array_user_list(self, temp):
+        login_user_list = []
+
+        for i in range(len(temp)):
+            login_user_list.append(temp[i][0])
+        return login_user_list
+
+    def send_main_user_list(self, user_list, s):
+        data = json.dumps(['/set_user_list', user_list])
+        print(data)
+        s.send(data.encode())
 
     # DB 작업
     @staticmethod

@@ -1,5 +1,8 @@
 import datetime
+import faulthandler
 import json
+from tkinter import messagebox, Tk
+
 import pymysql
 import socket
 import sys
@@ -25,15 +28,13 @@ class MainWindow(QMainWindow, qt_ui):
         self.socks = []
         self.BUFFER = 1024
 
-        self.show_user_list()
-        self.show_room_list()
-        # self.show_nickname()
-
-        self.set_nickname.clicked.connect(self.setup_nickname)
+        self.set_nickname.clicked.connect(self.check_nickname)
+        self.nickname_input.returnPressed.connect(self.check_nickname)
         self.make_room.clicked.connect(self.make_chat_room)
         self.room_list.clicked.connect(self.enter_chat_room)
 
         self.connect_to_main_server()
+        self.show_room_list()
 
     def connect_to_main_server(self):
         self.sock.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
@@ -51,47 +52,59 @@ class MainWindow(QMainWindow, qt_ui):
                 for s in r_sock:
                     if s == self.sock:
                         message = eval(self.sock.recv(self.BUFFER).decode())
+                        print(message)
                         self.command_processor(message[0], message[1])
 
     def command_processor(self, command, content):
-        if command == '/set_nickname_complete':
-            self.show_nickname(content)
-        elif command == '/set_nickname_label':
+        if command == '/set_nickname_complete' or command == '/set_nickname_label':
             self.show_nickname(content)
 
-    def setup_nickname(self):
+        elif command == '/nickname_exists':
+            self.nickname_exists()
+
+        elif command == '/setup_nickname':
+            self.setup_nickname()
+
+        elif command == '/set_user_list':
+            self.set_user_list(content)
+
+    def check_nickname(self):
         if self.nickname_input.text() == '':
-            QMessageBox.warning(self, '닉네임 미기입', '닉네임을 입력하세요.')
+            tk_window = Tk()
+            tk_window.geometry("0x0+3000+6000")
+            messagebox.showinfo('닉네임 미입력', '닉네임을 입력하세요.')
+            tk_window.destroy()
 
         else:
-            if self.check_nickname_exist() == 1:
-                QMessageBox.warning(self, '닉네임 중복', '이미 존재하는 닉네임입니다.')
-
-            else:
-                message = ['/set_nickname', self.nickname_input.text()]
-                message = json.dumps(message)
-                self.sock.send(message.encode())
-                self.show_nickname(self.nickname_input.text())
-
-        self.nickname_input.clear()
-        self.show_user_list()
+            self.check_nickname_exist()
 
     def check_nickname_exist(self):
-        sql = 'SELECT 닉네임 FROM state;'
-        temp = execute_db(sql)
-        for i in range(len(temp)):
-            if self.nickname_input.text() == temp[i][0]:
-                return 1
-        return 0
+        data = json.dumps(['/check_nickname_exist', self.nickname_input.text()])
+        self.sock.send(data.encode())
+
+    def setup_nickname(self):
+        data = json.dumps(['/setup_nickname', self.nickname_input.text()])
+        self.sock.send(data.encode())
+
+        self.nickname_input.clear()
+
+    def nickname_exists(self):
+        tk_window = Tk()
+        tk_window.geometry("0x0+3000+6000")
+        messagebox.showinfo('닉네임 중복', '이미 존재하는 닉네임입니다.')
+        tk_window.destroy()
+
+        self.nickname_input.clear()
 
     # DB에서 현재 port가 9000(메인화면이라고 가정)인 유저들을 불러와서 accessor_list에 출력함
     def show_user_list(self):
         self.accessor_list.clear()
-        sql = 'SELECT 닉네임 FROM state WHERE port=9000;'
-        login_user_list = execute_db(sql)
+        data = json.dumps(['/get_main_user_list', ''])
+        self.sock.send(data.encode())
 
+    def set_user_list(self, login_user_list):
         for i in range(len(login_user_list)):
-            self.accessor_list.insertItem(i, login_user_list[i][0])
+            self.accessor_list.insertItem(i, login_user_list[i])
 
     def show_room_list(self):
         self.room_list.clear()
@@ -101,15 +114,17 @@ class MainWindow(QMainWindow, qt_ui):
         for i in range(len(temp)):
             self.room_list.insertItem(i, f'{temp[i][1]}님의 방')
 
-    def default_set(self):
-        nickname = ''
+    def show_nickname(self, nickname):
         if not nickname:
+            self.welcome.setText('')
             self.nickname.setText('닉네임을 설정해주세요.')
 
-    def show_nickname(self, nickname):
-        self.nickname.setText(f'{nickname}')
-        self.welcome.setText('님 환영합니다.')
-        self.welcome.setGeometry(len(nickname) * 12 + 710, 10, 85, 16)
+        else:
+            self.nickname.setText(f'{nickname}')
+            self.welcome.setText('님 환영합니다.')
+            self.welcome.setGeometry(len(nickname) * 12 + 710, 10, 85, 16)
+
+        self.show_user_list()
 
     def make_chat_room(self):
         if self.check_have_room() == 1:
@@ -250,6 +265,7 @@ def execute_db(sql):
 
 
 if __name__ == '__main__':
+    faulthandler.enable()
     app = QApplication(sys.argv)
     main = MainWindow()
     main.show()
