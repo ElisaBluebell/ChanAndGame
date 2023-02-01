@@ -1,4 +1,5 @@
 import datetime
+import json
 import pymysql
 import socket
 import sys
@@ -22,6 +23,7 @@ class MainWindow(QMainWindow, qt_ui):
         self.chat_client = ''
         self.sock = socket()
         self.socks = []
+        self.BUFFER = 1024
 
         self.show_user_list()
         self.show_room_list()
@@ -48,8 +50,9 @@ class MainWindow(QMainWindow, qt_ui):
             if r_sock:
                 for s in r_sock:
                     if s == self.sock:
-                        msg = self.sock.recv(1024).decode()
+                        msg = eval(self.sock.recv(self.BUFFER).decode())
                         print(msg)
+                        print(type(msg))
                         self.execute_command()
 
     def execute_command(self):
@@ -64,7 +67,8 @@ class MainWindow(QMainWindow, qt_ui):
                 QMessageBox.warning(self, '닉네임 중복', '이미 존재하는 닉네임입니다.')
 
             else:
-                msg = f'/set_nickname, {self.nickname_input.text()}'
+                msg = ['/set_nickname', self.nickname_input.text()]
+                msg = json.dumps(msg)
                 self.sock.send(msg.encode())
                 # 내 IP에 해당하는 닉네임과 상태 정보 삭제
                 # sql = f'DELETE FROM state WHERE ip="{socket.gethostbyname(socket.gethostname())}";'

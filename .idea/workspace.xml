@@ -7,6 +7,7 @@
     <list default="true" id="12a35f88-34b3-481c-9af1-3bacfbe34dfa" name="Changes" comment="230131 ElisaBluebell">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/chat_client.py" beforeDir="false" afterPath="$PROJECT_DIR$/chat_client.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/chat_server.py" beforeDir="false" afterPath="$PROJECT_DIR$/chat_server.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -37,15 +38,15 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/Users/Kiot/Desktop/JohnKParkProjects/tcpIpStudy&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "last_opened_file_path": "C:/Users/Kiot/Desktop/JohnKParkProjects/tcpIpStudy",
+    "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
   }
-}</component>
-  <component name="RunManager" selected="Python.jy_chat_client">
+}]]></component>
+  <component name="RunManager" selected="Python.chat_client">
     <configuration name="chat_client" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="ChanAndGame" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -153,11 +154,10 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.jy_chat_client" />
         <item itemvalue="Python.chat_client" />
-        <item itemvalue="Python.test" />
         <item itemvalue="Python.chat_server" />
         <item itemvalue="Python.new" />
+        <item itemvalue="Python.jy_chat_client" />
         <item itemvalue="Python.test" />
       </list>
     </recent_temporary>
@@ -367,7 +367,14 @@
       <option name="project" value="LOCAL" />
       <updated>1675144969625</updated>
     </task>
-    <option name="localTasksCounter" value="29" />
+    <task id="LOCAL-00029" summary="230131 ElisaBluebell">
+      <created>1675166848803</created>
+      <option name="number" value="00029" />
+      <option name="presentableId" value="LOCAL-00029" />
+      <option name="project" value="LOCAL" />
+      <updated>1675166848803</updated>
+    </task>
+    <option name="localTasksCounter" value="30" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -385,9 +392,9 @@
     <MESSAGE value="ElisaBluebell" />
     <MESSAGE value="230130 ElisaBluebell" />
     <MESSAGE value="room.ui 수정" />
-    <MESSAGE value="230131 ElisaBluebell" />
     <MESSAGE value="room.ui 수정" />
     <MESSAGE value="test" />
-    <option name="LAST_COMMIT_MESSAGE" value="test" />
+    <MESSAGE value="230131 ElisaBluebell" />
+    <option name="LAST_COMMIT_MESSAGE" value="230131 ElisaBluebell" />
   </component>
 </project>
