@@ -46,16 +46,17 @@ class MainServer:
                             s.send(data.encode())
 
                         if not data:
-                            print(f'Client{s.getpeername()} is offline')
-                            s.close()
-                            self.sock_list.remove(s)
+                            self.connection_lost(s)
                             continue
 
                     except ConnectionResetError:
-                        print(f'Client{s.getpeername()} is offline')
-                        s.close()
-                        self.sock_list.remove(s)
+                        self.connection_lost(s)
                         continue
+
+    def connection_lost(self, s):
+        print(f'Client{s.getpeername()} is offline')
+        s.close()
+        self.sock_list.remove(s)
 
     def command_processor(self, user_ip, message, s):
         print(f'메시지: {message}')
@@ -73,8 +74,9 @@ class MainServer:
         sql = f'UPDATE state SET port=9000 WHERE ip="{ip}"'
         self.execute_db(sql)
 
-    def set_user_status_logout(self, c_sock, ip):
-        pass
+    def set_user_status_logout(self, ip):
+        sql = f'UPDATE state SET port=0 WHERE ip="{ip}"'
+        self.execute_db(sql)
 
     def set_client_nickname_label(self, c_sock, ip):
         sql = f'SELECT 닉네임 FROM state WHERE ip="{ip}"'
