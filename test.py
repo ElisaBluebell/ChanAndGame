@@ -15,18 +15,38 @@ class WindowClass(QMainWindow, form_class):
         super().__init__()
         self.setupUi(self)
 
-        self.initialize_socket(sip, sport)
+        # 서버에 통신 연결
+        self.c = socket(AF_INET, SOCK_STREAM)
+        self.c.connect((sip, sport))
 
         self.make_room.clicked.connect(self.roommake)
         self.set_nickname.clicked.connect(self.nickmake)
 
-    # 서버에 통신 연결 및 닉네임 확인
-    def initialize_socket(self, sip, sport):
-        self.c = socket(AF_INET, SOCK_STREAM)
-        self.c.connect((sip, sport))
-        r_msg = self.c.recv(1024)
-        if r_msg:
-            self.nickname.setText(f'{r_msg.decode()}님 환영합니다.')
+        # 스레드 동작
+        cth = Thread(target=self.reception, args=(self.c,))
+        cth.start()
+
+    # 수신
+    def reception(self, c):
+        while True:
+            r_msg = c.recv(1024)
+            r_msg = json.loads(r_msg.decode())
+            if r_msg[0] == '초기닉네임':
+                if r_msg == '닉네임을 설정해주세요.':
+                    self.nickname.setText(f'{r_msg[1]}')
+                else:
+                    self.nickname.setText(f'{r_msg[1]}님 환영합니다.')
+            elif r_msg[0][0] == '닉네임':
+                if r_msg[1] == 'True':
+                    self.nickname.setText(f'{r_msg[0][1]}님 환영합니다.')
+                    self.nickname_input.clear()
+                else:
+                    # QMessageBox.warning(self, '안내창', '닉네임이 중복되었습니다.')
+                    self.nickname_input.clear()
+            elif r_msg[0] == '접속자':
+                self.accessor_list.clear()
+                for i in r_msg[1]:
+                    self.accessor_list.addItem(f'{i[1]}[{i[0]}, {i[2]}]')
 
     # 방만들기
     def roommake(self):
@@ -39,14 +59,12 @@ class WindowClass(QMainWindow, form_class):
             msg = ['닉네임', nick]
             msg = json.dumps(msg)
             self.c.sendall(msg.encode())
-            r_msg = self.c.recv(1024)
-            print(r_msg.decode())
-            if r_msg.decode() == 'True':
-                self.nickname.setText(f'{nick}님 환영합니다.')
-                self.nickname_input.clear()
-            else:
-                QMessageBox.information(self, '안내창', '닉네임이 중복되었습니다.')
-                self.nickname_input.clear()
+
+    def closeEvent(self, e):
+        msg = ['나감', '']
+        msg = json.dumps(msg)
+        self.c.sendall(msg.encode())
+        print('나감')
 
 
 if __name__ == "__main__":
