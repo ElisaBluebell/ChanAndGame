@@ -33,6 +33,7 @@ class MainServer:
                     c_sock, addr = self.s_sock.accept()
                     self.sock_list.append(c_sock)
                     print(f'Client{addr} connected')
+                    self.set_client_default(c_sock, addr[0])
 
                 else:
                     try:
@@ -40,8 +41,8 @@ class MainServer:
                         print(f'Received: {s.getpeername()}: {data}')
 
                         if data:
-                            msg = eval(data)
-                            self.command_processor(s.getpeername()[0], msg, s)
+                            message = eval(data)
+                            self.command_processor(s.getpeername()[0], message, s)
                             s.send(data.encode())
 
                         if not data:
@@ -56,16 +57,27 @@ class MainServer:
                         self.sock_list.remove(s)
                         continue
 
-    def command_processor(self, user_ip, msg, s):
-        print(f'메시지: {msg}')
-        print(type(msg))
-        command = msg[0]
-        content = msg[1]
+    def command_processor(self, user_ip, message, s):
+        print(f'메시지: {message}')
+        print(type(message))
+        command = message[0]
+        content = message[1]
         if command == '/set_nickname':
-            self.set_nickname(user_ip, content, s)
+            self.set_client_nickname(user_ip, content, s)
 
+    def set_client_default(self, c_sock, ip):
+        self.set_client_nickname_label(c_sock, ip)
 
-    def set_nickname(self, user_ip, nickname, s):
+    def set_client_nickname_label(self, c_sock, ip):
+        sql = f'SELECT 닉네임 FROM state WHERE ip="{ip}"'
+        nickname = self.execute_db(sql)[0][0]
+        # print(nickname)
+        # print(f'client_ip: {ip}')
+        msg = ['/set_nickname_label', nickname]
+        data = json.dumps(msg)
+        c_sock.send(data.encode())
+
+    def set_client_nickname(self, user_ip, nickname, s):
         # 유저 IP에 해당하는 닉네임과 상태 정보 삭제
         sql = f'DELETE FROM state WHERE ip="{user_ip}";'
         self.execute_db(sql)
@@ -74,8 +86,8 @@ class MainServer:
         sql = f'INSERT INTO state VALUES ("{user_ip}", "{nickname}", 9000);'
         self.execute_db(sql)
 
-        msg = json.dumps(['/set_nickname_complete', nickname])
-        s.send(msg.encode())
+        message = json.dumps(['/set_nickname_complete', nickname])
+        s.send(message.encode())
 
     # DB 작업
     @staticmethod

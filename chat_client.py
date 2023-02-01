@@ -41,22 +41,22 @@ class MainWindow(QMainWindow, qt_ui):
         self.socks.append(self.sock)
         self.sock.connect(('10.10.21.121', 9000))
 
-        get_message = threading.Thread(target=self.print_msg, daemon=True)
+        get_message = threading.Thread(target=self.get_message, daemon=True)
         get_message.start()
 
-    def print_msg(self):
+    def get_message(self):
         while True:
             r_sock, w_sock, e_sock = select(self.socks, [], [], 0)
             if r_sock:
                 for s in r_sock:
                     if s == self.sock:
-                        msg = eval(self.sock.recv(self.BUFFER).decode())
-                        print(msg)
-                        print(type(msg))
-                        self.command_processor(msg[0], msg[1])
+                        message = eval(self.sock.recv(self.BUFFER).decode())
+                        self.command_processor(message[0], message[1])
 
     def command_processor(self, command, content):
         if command == '/set_nickname_complete':
+            self.show_nickname(content)
+        elif command == '/set_nickname_label':
             self.show_nickname(content)
 
     def setup_nickname(self):
@@ -68,13 +68,13 @@ class MainWindow(QMainWindow, qt_ui):
                 QMessageBox.warning(self, '닉네임 중복', '이미 존재하는 닉네임입니다.')
 
             else:
-                msg = ['/set_nickname', self.nickname_input.text()]
-                msg = json.dumps(msg)
-                self.sock.send(msg.encode())
+                message = ['/set_nickname', self.nickname_input.text()]
+                message = json.dumps(message)
+                self.sock.send(message.encode())
+                self.show_nickname(self.nickname_input.text())
 
         self.nickname_input.clear()
         self.show_user_list()
-        # self.show_nickname()
 
     def check_nickname_exist(self):
         sql = 'SELECT 닉네임 FROM state;'
