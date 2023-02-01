@@ -53,10 +53,11 @@ class MainWindow(QMainWindow, qt_ui):
                         msg = eval(self.sock.recv(self.BUFFER).decode())
                         print(msg)
                         print(type(msg))
-                        self.execute_command()
+                        self.command_processor(msg[0], msg[1])
 
-    def execute_command(self):
-        pass
+    def command_processor(self, command, content):
+        if command == '/set_nickname_complete':
+            self.show_nickname(content)
 
     def setup_nickname(self):
         if self.nickname_input.text() == '':
@@ -70,14 +71,6 @@ class MainWindow(QMainWindow, qt_ui):
                 msg = ['/set_nickname', self.nickname_input.text()]
                 msg = json.dumps(msg)
                 self.sock.send(msg.encode())
-                # 내 IP에 해당하는 닉네임과 상태 정보 삭제
-                # sql = f'DELETE FROM state WHERE ip="{socket.gethostbyname(socket.gethostname())}";'
-                # execute_db(sql)
-
-                # 내 IP에 해당하는 닉네임과 상태 정보 생성
-                # sql = f'''INSERT INTO state VALUES ("{socket.gethostbyname(socket.gethostname())}",
-                # "{self.nickname_input.text()}", "1");'''
-                # execute_db(sql)
 
         self.nickname_input.clear()
         self.show_user_list()
@@ -108,25 +101,15 @@ class MainWindow(QMainWindow, qt_ui):
         for i in range(len(temp)):
             self.room_list.insertItem(i, f'{temp[i][1]}님의 방')
 
-    def show_nickname(self):
+    def default_set(self):
         nickname = ''
-
-        try:
-            # 내 IP에 해당하는 닉네임을 DB에서 불러옴
-            sql = f'SELECT 닉네임 FROM state WHERE IP="{socket.gethostbyname(socket.gethostname())}";'
-            nickname = execute_db(sql)[0][0]
-
-        # DB에 데이터가 없을 경우 무시하고 진행
-        except IndexError:
-            pass
-
         if not nickname:
             self.nickname.setText('닉네임을 설정해주세요.')
 
-        else:
-            self.nickname.setText(f'{nickname}')
-            self.welcome.setText('님 환영합니다.')
-            self.welcome.setGeometry(len(nickname) * 12 + 710, 10, 85, 16)
+    def show_nickname(self, nickname):
+        self.nickname.setText(f'{nickname}')
+        self.welcome.setText('님 환영합니다.')
+        self.welcome.setGeometry(len(nickname) * 12 + 710, 10, 85, 16)
 
     def make_chat_room(self):
         if self.check_have_room() == 1:

@@ -1,3 +1,6 @@
+import json
+
+import pymysql
 import socket
 import select
 
@@ -37,10 +40,9 @@ class MainServer:
                         print(f'Received: {s.getpeername()}: {data}')
 
                         if data:
-                            s.send(data.encode())
                             msg = eval(data)
-                            print(msg)
-                            print(type(msg))
+                            self.command_processor(s.getpeername()[0], msg, s)
+                            s.send(data.encode())
 
                         if not data:
                             print(f'Client{s.getpeername()} is offline')
@@ -53,3 +55,46 @@ class MainServer:
                         s.close()
                         self.sock_list.remove(s)
                         continue
+
+    def command_processor(self, user_ip, msg, s):
+        print(f'메시지: {msg}')
+        print(type(msg))
+        command = msg[0]
+        content = msg[1]
+        if command == '/set_nickname':
+            self.set_nickname(user_ip, content, s)
+
+
+    def set_nickname(self, user_ip, nickname, s):
+        # 유저 IP에 해당하는 닉네임과 상태 정보 삭제
+        sql = f'DELETE FROM state WHERE ip="{user_ip}";'
+        self.execute_db(sql)
+
+        # 유저 IP에 해당하는 닉네임과 상태 정보 생성
+        sql = f'INSERT INTO state VALUES ("{user_ip}", "{nickname}", 9000);'
+        self.execute_db(sql)
+
+        msg = json.dumps(['/set_nickname_complete', nickname])
+        s.send(msg.encode())
+
+    # DB 작업
+    @staticmethod
+    def execute_db(sql):
+        conn = pymysql.connect(user='elisa', password='0000', host='10.10.21.108', port = 3306, database='chatandgame')
+        c = conn.cursor()
+
+        # 인수로 받아온 쿼리문에 해당하는 작업 수행
+        c.execute(sql)
+        # 커밋
+        conn.commit()
+
+        c.close()
+        conn.close()
+
+        # 결과 반환
+        return c.fetchall()
+
+
+if __name__ == '__main__':
+    main_server = MainServer
+    main_server()
