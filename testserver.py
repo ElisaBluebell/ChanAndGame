@@ -2,6 +2,7 @@ import threading
 from socket import *
 from threading import *
 import pymysql as p
+import json
 
 chost = '127.0.0.1'
 cport = 3306
@@ -63,31 +64,29 @@ class MultiChatServer:
 
             while True:
                 r_msg = c.recv(1024)
-                if r_msg.decode() == '닉네임':
-                    c.send('True'.encode())
-                    self.set_nickname(c, ip)
+                r_msg = json.loads(r_msg.decode())
+                if r_msg[0] == '닉네임':
+                    self.set_nickname(c, ip, r_msg[1])
 
     # 클라에서 닉네임 설정 버튼을 누르면 중복확인 및 DB에 닉네임 저장
-    def set_nickname(self, c, ip):
-        r_msg = c.recv(1024)
-        if r_msg:
-            overlap = False
-            sql = f"select 닉네임 from state;"
-            nick = execute_db(sql)
-            print(nick)
-            print(r_msg.decode())
-            for name in nick:
-                if r_msg.decode() in name:
-                    overlap = False
-                    break
-                else:
-                    overlap = True
-            if overlap:
-                sql = f"update state set 닉네임 = '{r_msg.decode()}' where ip = '{ip}';"
-                execute_db(sql)
-                c.send('True'.encode())
+    def set_nickname(self, c, ip, r_msg):
+        overlap = False
+        sql = f"select 닉네임 from state;"
+        nick = execute_db(sql)
+        print(nick)
+        for name in nick:
+            if r_msg in name:
+                overlap = False
+                break
             else:
-                c.send('False'.encode())
+                overlap = True
+        print(overlap)
+        if overlap:
+            sql = f"update state set 닉네임 = '{r_msg}' where ip = '{ip}';"
+            execute_db(sql)
+            c.send('True'.encode())
+        else:
+            c.send('False'.encode())
 
 
 if __name__ == '__main__':
