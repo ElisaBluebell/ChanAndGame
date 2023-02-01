@@ -54,6 +54,7 @@ class MainServer:
                         continue
 
     def connection_lost(self, s):
+        self.set_user_status_logout(s.getpeername()[0])
         print(f'Client{s.getpeername()} is offline')
         s.close()
         self.sock_list.remove(s)
