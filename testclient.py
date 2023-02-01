@@ -16,12 +16,15 @@ class WindowClass(QMainWindow, form_class):
 
         self.initialize_socket(sip, sport)
 
-        self.make_room.clicked.connect(self.roommake)
+        # self.make_room.clicked.connect(self.roommake)
         self.set_nickname.clicked.connect(self.nickmake)
 
     def initialize_socket(self, sip, sport):
-        self.client_socket = socket(AF_INET, SOCK_STREAM)
-        self.client_socket.connect((sip, sport))
+        self.c = socket(AF_INET, SOCK_STREAM)
+        self.c.connect((sip, sport))
+        r_msg = self.c.recv(1024)
+        if r_msg:
+            self.nickname.setText(r_msg.decode())
 
     def roommake(self):
         print('아직')
@@ -29,8 +32,11 @@ class WindowClass(QMainWindow, form_class):
     def nickmake(self):
         nick = self.nickname_input.text()
         if nick:
-            self.nickname.setText(nick)
-            self.nickname_input.clear()
+            self.c.send(nick.encode())
+            r_msg = self.c.recv(1024)
+            if r_msg.decode() == 'True':
+                self.nickname.setText(f'{nick}님 환영합니다.')
+                self.nickname_input.clear()
 
 
 if __name__ == "__main__":
