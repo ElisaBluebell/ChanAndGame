@@ -1,4 +1,5 @@
 import threading
+import time
 from socket import *
 from threading import *
 import pymysql as p
@@ -48,30 +49,59 @@ class MultiChatServer:
             if client not in self.clients:
                 self.clients.append(client)
             print(f'{ip} : {port} 가 연결되었습니다.')
+
+            # 클라 접속시 DB의 port를 9000(대기방)으로 변경
+            try:
+                sql = f'update state set port ="9000" where ip = "{ip}";'
+                execute_db(sql)
+            except:
+                pass
+
             # 닉네임 확인
             try:
-                spl = f'select ip, 닉네임 from state;'
-                c_ip = execute_db(spl)
+                sql = f'select ip, 닉네임 from state;'
+                c_ip = execute_db(sql)
+
                 if c_ip[0][1] == '':
-                    c.sendall('닉네임을 설정해주세요.'.encode())
+                    msg = json.dumps(['초기닉네임', '닉네임을 설정해주세요.'])
             except:
-                spl = f"insert into state values('{ip}','','9000');"
-                execute_db(spl)
-                c.sendall('닉네임을 설정해주세요.'.encode())
+                sql = f"insert into state values('{ip}','','9000');"
+                execute_db(sql)
+                msg = json.dumps(['초기닉네임', '닉네임을 설정해주세요.'])
 
             else:
-                c.sendall(str(c_ip[0][1]).encode())
+                msg = json.dumps(['초기닉네임', str(c_ip[0][1])])
 
-            cth = Thread(target=self.handler, args=(c, ip))
+            c.sendall(msg.encode())
+
+            # 스레드 동작
+            cth = Thread(target=self.reception, args=(c, ip))
             cth.start()
 
-    # 이벤트 확인
-    def handler(self, c, ip):
+    # 수신
+    def reception(self, c, ip):
         while True:
+            self.show_list()
             r_msg = c.recv(1024)
             r_msg = json.loads(r_msg.decode())
-            if r_msg[0] == '닉네임':
-                self.set_nickname(c, ip, r_msg[1])
+            if r_msg[0] == '나감':
+                sql = f'update state set port ="0" where ip = "{ip}";'
+                execute_db(sql)
+                print(f'{ip} 연결 종료')
+                break
+            elif r_msg[0] == '닉네임':
+                self.set_nickname(c, ip, r_msg)
+
+    # 대기창에서 접속자, 방목로 보여주기
+    def show_list(self):
+        sql = 'select * from state where port != "0";'
+        acc = execute_db(sql)
+        sql = 'SELECT DISTINCT 방번호, 생성자 FROM chat;'
+        room = execute_db(sql)
+        for client in self.clients:
+            s, (ip, port) = client
+            msg = json.dumps(['목록', acc, room])
+            s.sendall(msg.encode())
 
     # 클라에서 닉네임 설정 버튼을 누르면 중복확인 및 DB에 닉네임 저장
     def set_nickname(self, c, ip, r_msg):
@@ -79,17 +109,19 @@ class MultiChatServer:
         sql = f"select 닉네임 from state;"
         nick = execute_db(sql)
         for name in nick:
-            if r_msg in name:
+            if r_msg[1] in name:
                 overlap = False
                 break
             else:
                 overlap = True
         if overlap:
-            sql = f"update state set 닉네임 = '{r_msg}' where ip = '{ip}';"
+            sql = f"update state set 닉네임 = '{r_msg[1]}' where ip = '{ip}';"
             execute_db(sql)
-            c.sendall('True'.encode())
+            msg = json.dumps([r_msg, 'True'])
+            c.sendall(msg.encode())
         else:
-            c.sendall('False'.encode())
+            msg = json.dumps([r_msg, 'False'])
+            c.sendall(msg.encode())
 
 
 if __name__ == '__main__':
