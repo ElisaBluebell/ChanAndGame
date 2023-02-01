@@ -54,16 +54,23 @@ class MainServer:
 
                 else:
                     try:
-                        # 받아온
+                        # 받아온 바이트 데이터를 디코딩
                         data = s.recv(self.BUFFER).decode()
+                        # 송신자와 데이터 확인을 위해 콘솔창 출력
                         print(f'Received: {s.getpeername()}: {data}')
 
+                        # 실제 데이터를 수신한 경우
                         if data:
+                            # 데이터 자료형 복원
                             message = eval(data)
+                            # 명령 실행 함수로 이동(송신자와, 데이터를 가지고)
                             self.command_processor(s.getpeername()[0], message, s)
+                            # 수신한 데이터 에코
                             s.send(data.encode())
 
+                        # 유언을 받은 경우
                         if not data:
+                            # 시체를 안고 커넥션 로스트 함수로
                             self.connection_lost(s)
                             continue
 
@@ -72,16 +79,25 @@ class MainServer:
                         continue
 
     def connection_lost(self, s):
+        # DB상 유저 상태 변경 함수 실행
         self.set_user_status_logout(s.getpeername()[0])
+        # 커넥션 로스트 상태 확인을 위한 출력
         print(f'Client{s.getpeername()} is offline')
+        # 해당 커넥션 소켓 닫음
         s.close()
+        # 소켓 리스트에서 삭제
         self.sock_list.remove(s)
 
     def command_processor(self, user_ip, message, s):
+        # 메세지 확인을 위한 출력
         print(f'메시지: {message}')
         print(type(message))
+
+        # 명령문과 컨텐츠 구분
         command = message[0]
         content = message[1]
+
+        # 커맨드에 해당하는 명령 실행
         if command == '/set_nickname':
             # DB상 클라이언트 닉네임 변경
             self.set_client_nickname(user_ip, content, s)
@@ -104,8 +120,9 @@ class MainServer:
         sql = f'SELECT 닉네임 FROM state WHERE ip="{ip}"'
         nickname = self.execute_db(sql)[0][0]
 
-        msg = ['/set_nickname_label', nickname]
-        data = json.dumps(msg)
+        # 닉네임 라벨 설정을 명령하는 메세지 설정
+        data = json.dumps(['/set_nickname_label', nickname])
+        # 자료형 변환하여 전송
         c_sock.send(data.encode())
 
     def set_client_nickname(self, user_ip, nickname, s):
@@ -115,6 +132,7 @@ class MainServer:
         # 유저 IP에 해당하는 닉네임과 상태 정보 생성
         self.create_nickname_in_database(user_ip, nickname)
 
+        # 닉네임 세팅 종료를 알리는 메세지 설정 및 전송
         message = json.dumps(['/set_nickname_complete', nickname])
         s.send(message.encode())
 
