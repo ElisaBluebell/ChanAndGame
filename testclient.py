@@ -38,9 +38,8 @@ class WindowClass(QMainWindow, form_class):
         if nick:
             msg = ['닉네임', nick]
             msg = json.dumps(msg)
-            self.c.send(msg.encode())
+            self.c.sendall(msg.encode())
             r_msg = self.c.recv(1024)
-            print(r_msg)
             if r_msg.decode() == 'True':
                 self.nickname.setText(f'{nick}님 환영합니다.')
                 self.nickname_input.clear()

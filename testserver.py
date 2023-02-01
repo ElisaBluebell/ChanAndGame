@@ -48,45 +48,48 @@ class MultiChatServer:
             if client not in self.clients:
                 self.clients.append(client)
             print(f'{ip} : {port} 가 연결되었습니다.')
-            # 닉네임 확인하기
+            # 닉네임 확인
             try:
                 spl = f'select ip, 닉네임 from state;'
                 c_ip = execute_db(spl)
                 if c_ip[0][1] == '':
-                    c.send('닉네임을 설정해주세요.'.encode())
+                    c.sendall('닉네임을 설정해주세요.'.encode())
             except:
                 spl = f"insert into state values('{ip}','','9000');"
                 execute_db(spl)
-                c.send('닉네임을 설정해주세요.'.encode())
+                c.sendall('닉네임을 설정해주세요.'.encode())
 
             else:
-                c.send(str(c_ip[0][1]).encode())
+                c.sendall(str(c_ip[0][1]).encode())
 
-            while True:
-                r_msg = c.recv(1024)
-                r_msg = json.loads(r_msg.decode())
-                if r_msg[0] == '닉네임':
-                    self.set_nickname(c, ip, r_msg[1])
+            cth = Thread(target=self.handler, args=(c, ip))
+            cth.start()
+
+    # 이벤트 확인
+    def handler(self, c, ip):
+        while True:
+            r_msg = c.recv(1024)
+            r_msg = json.loads(r_msg.decode())
+            if r_msg[0] == '닉네임':
+                self.set_nickname(c, ip, r_msg[1])
 
     # 클라에서 닉네임 설정 버튼을 누르면 중복확인 및 DB에 닉네임 저장
     def set_nickname(self, c, ip, r_msg):
         overlap = False
         sql = f"select 닉네임 from state;"
         nick = execute_db(sql)
-        print(nick)
         for name in nick:
             if r_msg in name:
                 overlap = False
                 break
             else:
                 overlap = True
-        print(overlap)
         if overlap:
             sql = f"update state set 닉네임 = '{r_msg}' where ip = '{ip}';"
             execute_db(sql)
-            c.send('True'.encode())
+            c.sendall('True'.encode())
         else:
-            c.send('False'.encode())
+            c.sendall('False'.encode())
 
 
 if __name__ == '__main__':
