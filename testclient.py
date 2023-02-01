@@ -43,10 +43,13 @@ class WindowClass(QMainWindow, form_class):
                 else:
                     # QMessageBox.warning(self, '안내창', '닉네임이 중복되었습니다.')
                     self.nickname_input.clear()
-            elif r_msg[0] == '접속자':
+            elif r_msg[0] == '목록':
                 self.accessor_list.clear()
+                self.room_list.clear()
                 for i in r_msg[1]:
                     self.accessor_list.addItem(f'{i[1]}[{i[0]}, {i[2]}]')
+                for i in r_msg[2]:
+                    self.room_list.addItem(f'{i[0]}번 방, {i[1]}님의 방입니다.')
 
     # 방만들기
     def roommake(self):
