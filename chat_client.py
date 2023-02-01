@@ -1,10 +1,14 @@
+import datetime
+import json
+import pymysql
 import socket
 import sys
-import pymysql
-import datetime
+import threading
 
 from PyQt5 import uic
-from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox, QLabel, QListWidget
+from PyQt5.QtWidgets import QApplication, QLabel, QMainWindow, QMessageBox
+from select import *
+from socket import *
 
 room_ui = uic.loadUiType('room.ui')[0]
 qt_ui = uic.loadUiType('main.ui')[0]
@@ -16,15 +20,43 @@ class MainWindow(QMainWindow, qt_ui):
         self.setupUi(self)
         self.welcome = QLabel(self)
 
-        self.chat_client = ChatClient()
+        self.chat_client = ''
+        self.sock = socket()
+        self.socks = []
+        self.BUFFER = 1024
 
         self.show_user_list()
         self.show_room_list()
-        self.show_nickname()
+        # self.show_nickname()
 
         self.set_nickname.clicked.connect(self.setup_nickname)
         self.make_room.clicked.connect(self.make_chat_room)
         self.room_list.clicked.connect(self.enter_chat_room)
+
+        self.connect_to_main_server()
+
+    def connect_to_main_server(self):
+        self.sock.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
+
+        self.socks.append(self.sock)
+        self.sock.connect(('10.10.21.121', 9000))
+
+        get_message = threading.Thread(target=self.print_msg, daemon=True)
+        get_message.start()
+
+    def print_msg(self):
+        while True:
+            r_sock, w_sock, e_sock = select(self.socks, [], [], 0)
+            if r_sock:
+                for s in r_sock:
+                    if s == self.sock:
+                        msg = eval(self.sock.recv(self.BUFFER).decode())
+                        print(msg)
+                        print(type(msg))
+                        self.execute_command()
+
+    def execute_command(self):
+        pass
 
     def setup_nickname(self):
         if self.nickname_input.text() == '':
@@ -35,18 +67,21 @@ class MainWindow(QMainWindow, qt_ui):
                 QMessageBox.warning(self, '닉네임 중복', '이미 존재하는 닉네임입니다.')
 
             else:
+                msg = ['/set_nickname', self.nickname_input.text()]
+                msg = json.dumps(msg)
+                self.sock.send(msg.encode())
                 # 내 IP에 해당하는 닉네임과 상태 정보 삭제
-                sql = f'DELETE FROM state WHERE ip="{socket.gethostbyname(socket.gethostname())}";'
-                execute_db(sql)
+                # sql = f'DELETE FROM state WHERE ip="{socket.gethostbyname(socket.gethostname())}";'
+                # execute_db(sql)
 
                 # 내 IP에 해당하는 닉네임과 상태 정보 생성
-                sql = f'''INSERT INTO state VALUES ("{socket.gethostbyname(socket.gethostname())}", 
-                "{self.nickname_input.text()}", "1");'''
-                execute_db(sql)
+                # sql = f'''INSERT INTO state VALUES ("{socket.gethostbyname(socket.gethostname())}",
+                # "{self.nickname_input.text()}", "1");'''
+                # execute_db(sql)
 
         self.nickname_input.clear()
         self.show_user_list()
-        self.show_nickname()
+        # self.show_nickname()
 
     def check_nickname_exist(self):
         sql = 'SELECT 닉네임 FROM state;'
@@ -56,10 +91,10 @@ class MainWindow(QMainWindow, qt_ui):
                 return 1
         return 0
 
-    # DB에서 현재 상태가 1(로그인이라고 가정)인 유저들을 불러와서 accessor_list에 출력함
+    # DB에서 현재 port가 9000(메인화면이라고 가정)인 유저들을 불러와서 accessor_list에 출력함
     def show_user_list(self):
         self.accessor_list.clear()
-        sql = 'SELECT 닉네임 FROM state WHERE 상태="1";'
+        sql = 'SELECT 닉네임 FROM state WHERE port=9000;'
         login_user_list = execute_db(sql)
 
         for i in range(len(login_user_list)):
@@ -107,6 +142,7 @@ class MainWindow(QMainWindow, qt_ui):
             "{socket.gethostbyname(socket.gethostname())}", "{empty_port}");'''
             execute_db(sql)
 
+            self.chat_client = ChatClient()
             self.chat_client.show()
             self.show_room_list()
 
@@ -148,7 +184,7 @@ class MainWindow(QMainWindow, qt_ui):
             # 아직 IP로 표시되기 때문에 유저명이 아닌 IP를 일단 불러옴
             sql = f'SELECT port FROM chat WHERE 생성자="{user_name}";'
             port = execute_db(sql)[0][0]
-            self.chat_client.setup_chatroom()
+            self.chat_client = ChatClient()
             self.chat_client.show()
 
         else:
@@ -159,6 +195,7 @@ class ChatClient(QMainWindow, room_ui):
     def __init__(self):
         super().__init__()
         self.setupUi(self)
+        self.setup_chatroom()
 
     def setup_chatroom(self):
         self.chat_list.clear()
@@ -170,18 +207,30 @@ class ChatClient(QMainWindow, room_ui):
         self.insert_recent_chat()
 
     def room_create_info(self):
-        # 통신 미적용으로 인해 임의로 9000번 포트 줌
-        sql = 'SELECT * FROM chat WHERE port=9000 LIMIT 1;'
+        # 통신 미적용으로 인해 임의로 9001번 포트 줌
+        sql = 'SELECT * FROM chat WHERE port=9001 LIMIT 5;'
         chat_log = execute_db(sql)
         self.chat_list.insertItem(0, f'[{chat_log[0][2][:-3]}]{chat_log[0][1]}{chat_log[0][3]}')
 
     def insert_recent_chat(self):
-        row = 0
-        self.chat_list = QListWidget(self)
-        sql = 'SELECT * FROM chat WHERE port=9000 ORDER BY 시간 DESC LIMIT 5;'
-        temp = execute_db(sql)
-        for i in range(len(temp), 0, -1):
-            self.chat_list.insertItem(row, f'{temp[i]}')
+        row = 1
+        temp = None
+
+        try:
+            sql = 'SELECT * FROM chat WHERE port=9001 ORDER BY 시간 DESC LIMIT 21;'
+            temp = execute_db(sql)
+            print(temp)
+        except:
+            pass
+        if temp is not None:
+            for i in range(len(temp), 1, -1):
+                self.chat_list.insertItem(row, f'[{temp[i - 1][2][5:-3]}]{temp[i - 1][1]}: {temp[i - 1][3]}')
+                row += 1
+        self.chat_list.clicked.connect(self.printa)
+
+    def printa(self):
+        # chat_list = QListWidget
+        print(self.chat_list.currentItem().text())
 
     def show_user(self):
         pass
