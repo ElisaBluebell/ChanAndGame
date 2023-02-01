@@ -3,6 +3,7 @@ from PyQt5.QtWidgets import *
 from PyQt5 import uic
 from socket import *
 from threading import *
+import json
 
 form_class = uic.loadUiType("main.ui")[0]
 ip = '10.10.21.108'
@@ -33,19 +34,19 @@ class WindowClass(QMainWindow, form_class):
 
     # 닉네임 설정 하기
     def nickmake(self):
-        self.c.send('닉네임'.encode())
-        r_msg = self.c.recv(1024)
-        if r_msg.decode() == 'True':
-            nick = self.nickname_input.text()
-            if nick:
-                self.c.send(nick.encode())
-                r_msg = self.c.recv(1024)
-                if r_msg.decode() == 'True':
-                    self.nickname.setText(f'{nick}님 환영합니다.')
-                    self.nickname_input.clear()
-                else:
-                    QMessageBox.information(self, '안내창', '닉네임이 중복되었습니다.')
-                    self.nickname_input.clear()
+        nick = self.nickname_input.text()
+        if nick:
+            msg = ['닉네임', nick]
+            msg = json.dumps(msg)
+            self.c.send(msg.encode())
+            r_msg = self.c.recv(1024)
+            print(r_msg)
+            if r_msg.decode() == 'True':
+                self.nickname.setText(f'{nick}님 환영합니다.')
+                self.nickname_input.clear()
+            else:
+                QMessageBox.information(self, '안내창', '닉네임이 중복되었습니다.')
+                self.nickname_input.clear()
 
 
 if __name__ == "__main__":
