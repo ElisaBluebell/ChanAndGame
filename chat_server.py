@@ -66,7 +66,15 @@ class MainServer:
             self.set_client_nickname(user_ip, content, s)
 
     def set_client_default(self, c_sock, ip):
+        self.set_user_status_login(ip)
         self.set_client_nickname_label(c_sock, ip)
+
+    def set_user_status_login(self, ip):
+        sql = f'UPDATE state SET port=9000 WHERE ip="{ip}"'
+        self.execute_db(sql)
+
+    def set_user_status_logout(self, c_sock, ip):
+        pass
 
     def set_client_nickname_label(self, c_sock, ip):
         sql = f'SELECT 닉네임 FROM state WHERE ip="{ip}"'
