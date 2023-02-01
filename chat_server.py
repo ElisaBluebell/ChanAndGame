@@ -1,3 +1,6 @@
+import json
+
+import pymysql
 import socket
 import select
 
@@ -30,6 +33,7 @@ class MainServer:
                     c_sock, addr = self.s_sock.accept()
                     self.sock_list.append(c_sock)
                     print(f'Client{addr} connected')
+                    self.set_client_default(c_sock, addr[0])
 
                 else:
                     try:
@@ -37,19 +41,82 @@ class MainServer:
                         print(f'Received: {s.getpeername()}: {data}')
 
                         if data:
+                            message = eval(data)
+                            self.command_processor(s.getpeername()[0], message, s)
                             s.send(data.encode())
-                            msg = eval(data)
-                            print(msg)
-                            print(type(msg))
 
                         if not data:
-                            print(f'Client{s.getpeername()} is offline')
-                            s.close()
-                            self.sock_list.remove(s)
+                            self.connection_lost(s)
                             continue
 
                     except ConnectionResetError:
-                        print(f'Client{s.getpeername()} is offline')
-                        s.close()
-                        self.sock_list.remove(s)
+                        self.connection_lost(s)
                         continue
+
+    def connection_lost(self, s):
+        print(f'Client{s.getpeername()} is offline')
+        s.close()
+        self.sock_list.remove(s)
+
+    def command_processor(self, user_ip, message, s):
+        print(f'메시지: {message}')
+        print(type(message))
+        command = message[0]
+        content = message[1]
+        if command == '/set_nickname':
+            self.set_client_nickname(user_ip, content, s)
+
+    def set_client_default(self, c_sock, ip):
+        self.set_user_status_login(ip)
+        self.set_client_nickname_label(c_sock, ip)
+
+    def set_user_status_login(self, ip):
+        sql = f'UPDATE state SET port=9000 WHERE ip="{ip}"'
+        self.execute_db(sql)
+
+    def set_user_status_logout(self, ip):
+        sql = f'UPDATE state SET port=0 WHERE ip="{ip}"'
+        self.execute_db(sql)
+
+    def set_client_nickname_label(self, c_sock, ip):
+        sql = f'SELECT 닉네임 FROM state WHERE ip="{ip}"'
+        nickname = self.execute_db(sql)[0][0]
+        # print(nickname)
+        # print(f'client_ip: {ip}')
+        msg = ['/set_nickname_label', nickname]
+        data = json.dumps(msg)
+        c_sock.send(data.encode())
+
+    def set_client_nickname(self, user_ip, nickname, s):
+        # 유저 IP에 해당하는 닉네임과 상태 정보 삭제
+        sql = f'DELETE FROM state WHERE ip="{user_ip}";'
+        self.execute_db(sql)
+
+        # 유저 IP에 해당하는 닉네임과 상태 정보 생성
+        sql = f'INSERT INTO state VALUES ("{user_ip}", "{nickname}", 9000);'
+        self.execute_db(sql)
+
+        message = json.dumps(['/set_nickname_complete', nickname])
+        s.send(message.encode())
+
+    # DB 작업
+    @staticmethod
+    def execute_db(sql):
+        conn = pymysql.connect(user='elisa', password='0000', host='10.10.21.108', port = 3306, database='chatandgame')
+        c = conn.cursor()
+
+        # 인수로 받아온 쿼리문에 해당하는 작업 수행
+        c.execute(sql)
+        # 커밋
+        conn.commit()
+
+        c.close()
+        conn.close()
+
+        # 결과 반환
+        return c.fetchall()
+
+
+if __name__ == '__main__':
+    main_server = MainServer
+    main_server()
