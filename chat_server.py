@@ -3,46 +3,53 @@ import select
 
 
 class MainServer:
-    sock_list = []
-    BUFFER = 1024
-    port = 9000
+    def __init__(self):
+        self.sock_list = []
+        self.BUFFER = 1024
+        self.ip = '10.10.21.121'
+        self.port = 9000
+        self.s_sock = socket.socket()
 
-    s_sock = socket.socket()
-    s_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    s_sock.bind(('10.10.21.121', port))
-    s_sock.listen()
+        self.initialize_socket()
+        self.receive_message()
 
-    sock_list.append(s_sock)
-    print(f'Waiting Connections on Port {port}...')
+    def initialize_socket(self):
+        self.s_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.s_sock.bind((self.ip, self.port))
+        self.s_sock.listen()
 
-    while True:
-        r_sock, w_sock, e_sock = select.select(sock_list, [], [], 0)
-        for s in r_sock:
+        self.sock_list.append(self.s_sock)
+        print(f'Waiting Connections on Port {self.port}...')
 
-            if s == s_sock:
-                c_sock, addr = s_sock.accept()
-                sock_list.append(c_sock)
-                print(f'Client{addr} connected')
+    def receive_message(self):
+        while True:
+            r_sock, w_sock, e_sock = select.select(self.sock_list, [], [], 0)
+            for s in r_sock:
 
-            else:
-                try:
-                    data = s.recv(BUFFER).decode()
-                    print(f'Received: {s.getpeername()}: {data}')
+                if s == self.s_sock:
+                    c_sock, addr = self.s_sock.accept()
+                    self.sock_list.append(c_sock)
+                    print(f'Client{addr} connected')
 
-                    if data:
-                        s.send(data.encode())
-                        msg = eval(data)
-                        print(msg)
-                        print(type(msg))
+                else:
+                    try:
+                        data = s.recv(self.BUFFER).decode()
+                        print(f'Received: {s.getpeername()}: {data}')
 
-                    if not data:
+                        if data:
+                            s.send(data.encode())
+                            msg = eval(data)
+                            print(msg)
+                            print(type(msg))
+
+                        if not data:
+                            print(f'Client{s.getpeername()} is offline')
+                            s.close()
+                            self.sock_list.remove(s)
+                            continue
+
+                    except ConnectionResetError:
                         print(f'Client{s.getpeername()} is offline')
                         s.close()
-                        sock_list.remove(s)
+                        self.sock_list.remove(s)
                         continue
-
-                except ConnectionResetError:
-                    print(f'Client{s.getpeername()} is offline')
-                    s.close()
-                    sock_list.remove(s)
-                    continue
