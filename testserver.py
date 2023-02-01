@@ -1,3 +1,4 @@
+import threading
 from socket import *
 from threading import *
 import pymysql as p
@@ -8,18 +9,27 @@ cuser = 'root'
 cpw = '0000'
 cdb = 'chatandgame'
 
+def execute_db(sql):
+    conn = p.connect(host=chost, port=cport, user=cuser, password=cpw, db=cdb, charset='utf8')
+    c = conn.cursor()
+
+    # 인수로 받아온 쿼리문에 해당하는 작업 수행
+    c.execute(sql)
+    # 커밋
+    conn.commit()
+
+    conn.close()
+
+    # 결과 반환
+    return c.fetchall()
+
 
 class MultiChatServer:
 
     def __init__(self):
 
-        # db 연결
-        self.conn = p.connect(host=chost, port=cport, user=cuser, password=cpw, db=cdb, charset='utf8')
-        self.c = self.conn.cursor()
-        self.conn.close()
-
         self.clients = list()
-        self.mes = str()
+        # 소켓 세팅
         self.s = socket(AF_INET, SOCK_STREAM)
         self.ip = '10.10.21.108'
         self.port = 9000
@@ -29,22 +39,32 @@ class MultiChatServer:
         self.s.listen(100)
         self.accept_client()
 
-    def open_db(self):
-        self.conn = p.connect(host=chost, port=cport, user=cuser, password=cpw, db=cdb, charset='utf8')
-        self.c = self.conn.cursor()
-
+    # 클라 접속시 state DB 에 저장
     def accept_client(self):
         while True:
             client = c, (ip, port) = self.s.accept()
             if client not in self.clients:
                 self.clients.append(client)
             print(f'{ip} : {port} 가 연결되었습니다.')
+            try:
+                spl = f'select ip, 닉네임 from state;'
+                c_ip = execute_db(spl)
+                if c_ip[0][1] == ' ':
+                    c.send('닉네임을 설정해주세요.'.encode())
+            except:
+                spl = f"insert into state values('{ip}',' ','9000');"
+                execute_db(spl)
+                c.send('닉네임을 설정해주세요.'.encode())
 
-    def closeEvent(self, e):
-        self.open_db()
-        self.c.execute('delete from state;')
-        self.conn.commit()
-        self.c.close()
+            else:
+                c.send(str(c_ip[0][1]).encode())
+
+            r_msg = c.recv(1024)
+
+            if r_msg:
+                c.send('True'.encode())
+            else:
+                c.send('False'.encode())
 
 
 if __name__ == '__main__':
