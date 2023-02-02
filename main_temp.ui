@@ -338,10 +338,9 @@
     <widget class="QPushButton" name="invite">
      <property name="geometry">
       <rect>
-       <x>770</x>
+       <x>790</x>
        <y>390</y>
        <width>71</width>
-       <width>90</width>
        <height>35</height>
       </rect>
      </property>
