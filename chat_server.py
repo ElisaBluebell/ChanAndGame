@@ -6,9 +6,14 @@ import select
 
 
 class MainServer:
+
+    # 초기 세팅
+
     def __init__(self):
         # 소켓 리스트
         self.sock_list = []
+        self.server_list = []
+
         # 데이터 사이즈
         self.BUFFER = 1024
         # 서버 오픈을 위한 포트와 아이피
@@ -31,26 +36,41 @@ class MainServer:
         # 오픈
         self.s_sock.listen()
 
-        # 소켓 리스트에 서버 소켓 추가
+        # 소켓 리스트와 서버 소켓 리스트에 서버 소켓 추가
         self.sock_list.append(self.s_sock)
+        self.server_list.append(self.s_sock)
+        # 채팅 소켓 초기 설정 함수 호출
+        self.initialize_chat_socket()
         # 포트 번호를 알림
         print(f'Waiting Connections on Port {self.port}...')
 
+    # 채팅 소켓 설정 함수
+    def initialize_chat_socket(self):
+        # 9001번 포트부터 9100번 포트까지 사용
+        for i in range(9001, 9101):
+            # 각각의 포트를 반복문을 활용해 소켓 객체로 선언
+            globals()['port' + str(i)] = socket.socket()
+
+            # 소켓 초기 설정 및 입력 대기
+            globals()['port' + str(i)].setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            globals()['port' + str(i)].bind((self.ip, i))
+            globals()['port' + str(i)].listen()
+
+            # 소켓 리스트와 서버 소켓 리스트에 반복생성한 함수 추가
+            self.sock_list.append(globals()['port' + str(i)])
+            self.server_list.append(globals()['port' + str(i)])
+
+    # 명령문 받기 함수
     def receive_command(self):
         while True:
             # 읽기, 쓰기, 오류 소켓 리스트를 넌블로킹 모드로 선언
             r_sock, w_sock, e_sock = select.select(self.sock_list, [], [], 0)
             for s in r_sock:
-
-                if s == self.s_sock:
+                if s in self.server_list:
                     # 접속받은 소켓과 주소 설정
-                    c_sock, addr = self.s_sock.accept()
-                    # 클라이언트 소켓을 소켓 리스트에 추가함
-                    self.sock_list.append(c_sock)
-                    # 해당 주소의 접속을 콘솔에 출력
-                    print(f'Client{addr} connected')
-                    # 클라이언트의 초기 설정
-                    self.set_client_default(c_sock, addr[0])
+                    c_sock, addr = s.accept()
+                    # 접속받은 소켓에 대한 설정 진행
+                    self.set_client(c_sock, addr, s)
 
                 else:
                     try:
@@ -65,9 +85,6 @@ class MainServer:
                             message = eval(data)
                             # 명령 실행 함수로 이동(송신자와, 데이터를 가지고)
                             self.command_processor(s.getpeername()[0], message, s)
-                            # # 수신한 명령 에코
-                            # command_taken = json.dumps(['the last command was' + message[0], message[1]])
-                            # s.send(command_taken.encode())
 
                         # 유언을 받은 경우
                         if not data:
@@ -79,6 +96,42 @@ class MainServer:
                         self.connection_lost(s)
                         continue
 
+    # 클라이언트 소켓 접속시 행해지는 기본설정들
+    def set_client(self, c_sock, addr, s):
+        # 클라이언트 소켓을 소켓 리스트에 추가함
+        self.sock_list.append(c_sock)
+        # 해당 주소의 접속을 콘솔에 출력
+        print(f'Client{addr} connected')
+        # 클라이언트의 초기 설정 요청
+        self.set_client_default(c_sock, addr[0], s.getsockname()[1])
+
+    def set_client_default(self, c_sock, ip, port):
+        # 접속한 유저의 DB상 포트 번호를 현재 접속한 포트 번호로 변경
+        self.set_user_status_login(ip, port)
+        # 포트 번호 9000번(메인 페이지 접속중)일 시
+        if port == 9000:
+            # 클라이언트의 닉네임 라벨 설정 함수 호출
+            self.set_client_nickname_label(c_sock, ip)
+
+    # 접속한 유저의 IP를 매개로 유저 DB의 포트 번호 설정
+    def set_user_status_login(self, ip, port):
+        sql = f'UPDATE state SET port={port} WHERE ip="{ip}"'
+        self.execute_db(sql)
+
+    def set_client_nickname_label(self, c_sock, ip):
+        # DB에서 클라이언트의 ip에 해당하는 닉네임을 추출
+        sql = f'SELECT 닉네임 FROM state WHERE ip="{ip}"'
+        try:
+            nickname = self.execute_db(sql)[0][0]
+
+        # DB에 등록된 닉네임이 없어 IndexError가 뜰 경우 nickname은 ''으로 설정
+        except IndexError:
+            nickname = ''
+
+        # 정상적으로 등록된 닉네임이 있을 경우 닉네임 변경을 요청함
+        self.send_command('/set_nickname_label', nickname, c_sock)
+
+    # 연결 소실시 행해지는 작업
     def connection_lost(self, s):
         # DB상 유저 상태 변경 함수 실행
         self.set_user_status_logout(s.getpeername()[0])
@@ -89,15 +142,47 @@ class MainServer:
         # 소켓 리스트에서 삭제
         self.sock_list.remove(s)
 
+    # 접속 종료한 유저의 IP를 매개로 포트 번호 초기화
+    def set_user_status_logout(self, ip):
+        sql = f'UPDATE state SET port=0 WHERE ip="{ip}"'
+        self.execute_db(sql)
+
+    # 명령문 전송
+    @staticmethod
+    def send_command(command, content, s):
+        data = json.dumps([command, content])
+        s.send(data.encode())
+
+    # DB 작업
+    @staticmethod
+    def execute_db(sql):
+        conn = pymysql.connect(user='elisa', password='0000', host='10.10.21.108', port=3306, database='chatandgame')
+        c = conn.cursor()
+
+        # 인수로 받아온 쿼리문에 해당하는 작업 수행
+        c.execute(sql)
+        # 커밋
+        conn.commit()
+
+        c.close()
+        conn.close()
+
+        # 결과 반환
+        return c.fetchall()
+
+    # 초기 세팅 종료
+
+    # 명령문 수신 및 전송
+
+    # 명령문 커넥션
     def command_processor(self, user_ip, message, s):
         # 명령문과 컨텐츠 구분
         command = message[0]
         content = message[1]
         print(f'command: {command}, content: {content}')
 
-        # 커맨드에 해당하는 명령 실행
+        # 이하 각 커맨드에 해당하는 명령 실행
         if command == '/setup_nickname':
-            # DB상 클라이언트 닉네임 변경
             self.setup_nickname(user_ip, content, s)
 
         elif command == '/check_nickname_exist':
@@ -112,49 +197,10 @@ class MainServer:
         elif command == '/make_chat_room':
             self.make_chat_room(user_ip, content, s)
 
-    def set_client_default(self, c_sock, ip):
-        # 접속한 유저의 DB상 포트 번호(현재 상태)를 9000번(메인 접속, 기본)으로 변경
-        self.set_user_status_login(ip)
-        # 클라이언트의 닉네임 라벨을 현재 접속한 ip에 맞게 변경하는 [명령문, 닉네임] 전송
-        self.set_client_nickname_label(c_sock, ip)
+        elif command == '/request_port':
+            self.give_port(content, s)
 
-    def set_user_status_login(self, ip):
-        sql = f'UPDATE state SET port=9000 WHERE ip="{ip}"'
-        self.execute_db(sql)
-
-    def set_user_status_logout(self, ip):
-        sql = f'UPDATE state SET port=0 WHERE ip="{ip}"'
-        self.execute_db(sql)
-
-    def set_client_nickname_label(self, c_sock, ip):
-        sql = f'SELECT 닉네임 FROM state WHERE ip="{ip}"'
-        try:
-            nickname = self.execute_db(sql)[0][0]
-
-        # DB에 등록된 닉네임이 없어 IndexError가 뜰 경우 nickname은 ''으로 설정해서 전송
-        except IndexError:
-            nickname = ''
-
-        # 닉네임 라벨 설정을 명령하는 메세지 설정
-        data = json.dumps(['/set_nickname_label', nickname])
-        # 자료형 변환하여 전송
-        c_sock.send(data.encode())
-
-    def check_nickname_exist(self, nickname, s):
-        checker = 0
-        sql = 'SELECT 닉네임 FROM state;'
-        temp = self.execute_db(sql)
-
-        for i in range(len(temp)):
-            if nickname == temp[i][0]:
-                data = json.dumps(['/nickname_exists', ''])
-                s.send(data.encode())
-                checker = 1
-
-        if checker == 0:
-            data = json.dumps(['/setup_nickname', nickname])
-            s.send(data.encode())
-
+    # /setup_nickname 명령문
     def setup_nickname(self, user_ip, nickname, s):
         # 유저 IP에 해당하는 닉네임과 상태 정보 삭제
         self.delete_nickname_from_database(user_ip)
@@ -163,27 +209,50 @@ class MainServer:
         self.create_nickname_in_database(user_ip, nickname)
 
         # 닉네임 세팅 종료를 알리는 메세지 설정 및 전송
-        data = json.dumps(['/set_nickname_complete', nickname])
-        s.send(data.encode())
+        self.send_command('/set_nickname_complete', nickname, s)
 
+    # 유저 정보 DB 삭제
     def delete_nickname_from_database(self, user_ip):
         sql = f'DELETE FROM state WHERE ip="{user_ip}";'
         self.execute_db(sql)
 
+    # 유저 정보 DB 생성
     def create_nickname_in_database(self, user_ip, nickname):
         sql = f'INSERT INTO state VALUES ("{user_ip}", "{nickname}", 9000);'
         self.execute_db(sql)
 
-    def send_message(self):
-        pass
+    # /check_nickname_exists 명령문
+    # 닉네임의 중복을 확인하고 닉네임 설정을 요청함
+    def check_nickname_exist(self, nickname, s):
+        # 닉네임 중복 유무 확인을 위한 변수 선언
+        checker = 0
+        # DB에서 모든 닉네임을 추출
+        sql = 'SELECT 닉네임 FROM state;'
+        temp = self.execute_db(sql)
 
+        # 불러온 닉네임들이 클라이언트에서 보내온 닉네임과 일치하는지 확인
+        for i in range(len(temp)):
+            # 일치하는 경우 닉네임 중복임을 클라이언트에 알림
+            if nickname == temp[i][0]:
+                self.send_command('/nickname_exists', '', s)
+                checker = 1
+
+        # 일치하는 닉네임이 없을 경우 클라이언트의 닉네임으로 설정을 허가함
+        if checker == 0:
+            self.send_command('/setup_nickname', nickname, s)
+
+    # /get_main_user_list 명령문
+    # DB를 통해 현재 메인 페이지 접속중인 유저 정보를 불러와 클라이언트에게 전달
     def get_main_user_list(self, s):
         sql = 'SELECT 닉네임 FROM state WHERE port=9000;'
         temp = self.execute_db(sql)
+        # 데이터 전송을 위해 유저 정보를 리스트로 정리
         login_user_list = self.array_user_list(temp)
-        self.send_main_user_list(login_user_list, s)
+        self.send_command('/set_user_list', login_user_list, s)
 
-    def array_user_list(self, temp):
+    # 반복문을 활용해 인수로 받은 유저 정보를 리스트로 만들어 반환
+    @staticmethod
+    def array_user_list(temp):
         login_user_list = []
 
         for i in range(len(temp)):
@@ -191,23 +260,18 @@ class MainServer:
 
         return login_user_list
 
-    def send_main_user_list(self, user_list, s):
-        data = json.dumps(['/set_user_list', user_list])
-        print(data)
-        s.send(data.encode())
-
+    # /get_room_list 명령문
+    # DB를 통해 현재 개설된 채팅방의 정보를 정리하여 클라이언트에게 전달
     def get_room_list(self, s):
         sql = 'SELECT DISTINCT a.방번호, b.닉네임 FROM chat AS a INNER JOIN state AS b on a.생성자=b.ip;'
         temp = self.execute_db(sql)
+        # 반복문을 활용해 유저 정보를 리스트로 만들어서 전송
         room_list = self.array_room_list(temp)
-        self.send_room_list(room_list, s)
+        self.send_command('/set_room_list', room_list, s)
 
-    def send_room_list(self, room_list, s):
-        data = json.dumps(['/set_room_list', room_list])
-        print(data)
-        s.send(data.encode())
-
-    def array_room_list(self, temp):
+    # 리스트화 로직은 array_user_list 함수와 같으나 DB에서 가져온 묶음 형태의 데이터를 그대로 전송하기에 신규 작성함
+    @staticmethod
+    def array_room_list(temp):
         room_list = []
 
         for i in range(len(temp)):
@@ -215,23 +279,34 @@ class MainServer:
 
         return room_list
 
-    # 채팅방 생성 및 입장# 채팅방 생성 및 입장# 채팅방 생성 및 입장# 채팅방 생성 및 입장# 채팅방 생성 및 입장# 채팅방 생성 및 입장# 채팅방 생성 및 입장
+    # /make_chat_room 명령문
+    # 채팅방 생성 및 입장
     def make_chat_room(self, user_ip, nickname, s):
+        # 해당 유저의 방 개설 정보 확인
         if self.check_have_room(user_ip) == 1:
-            self.room_already_exists(s)
+            # 방이 이미 존재할 경우 중복 생성 불가함을 클라이언트에게 전달
+            self.send_command('/room_already_exists', '', s)
 
+        # 해당 유저가 방을 개설하지 않았을 경우
         else:
-            # 빈 방 체크
-            empty_room_number = self.empty_number_checker('방번호', 1, 100)
-            empty_port = self.empty_number_checker('port', 9001, 9100)
+            # 빈 방 번호와 부여할 포트 번호 체크, 방 번호는 1번부터 100번까지, 포트 번호는 9001번부터 9100번까지 사용
+            empty_room_number = self.empty_number_checker('방번호', 1, 101)
+            empty_port = self.empty_number_checker('port', 9001, 9101)
 
+            # 채팅방 DB를 만들고
             self.make_chat_room_db(nickname, empty_room_number, empty_port)
+            # 해당 채팅방 개설과 관련된 작업을 클라이언트에게 지시
+            self.send_command('/open_chat_room', empty_port, s)
 
-            self.send_open_chat_room(s, empty_port)
+    # 생성자 IP 정보를 DB에서 받아와서 현재 접속 IP와 대조함, 일치시 1, 일치하는 값 없을 시 0 반환
+    def check_have_room(self, user_ip):
+        sql = f'''SELECT 생성자 FROM chat;'''
+        temp = self.execute_db(sql)
 
-    def room_already_exists(self, s):
-        data = json.dumps(['/room_already_exists', ''])
-        s.send(data.encode())
+        for room_maker in temp:
+            if user_ip == room_maker[0]:
+                return 1
+        return 0
 
     # 빈 숫자 확인을 위한 함수, 매개변수(칼럼명, 시작값, 종료값)
     def empty_number_checker(self, item, start, end):
@@ -240,7 +315,7 @@ class MainServer:
 
         # 시작값부터 종료값까지 반복문을 실행해 중간에 비어있는 값을 찾는다.
         for i in range(start, end):
-            # 번호 확인을 위한 변수 선언
+            # 번호 존재를 체크하기 위한 변수 선언
             checker = 0
 
             # DB에서 받아온 번호가 i값과 같을 시 반복문 정지
@@ -253,46 +328,23 @@ class MainServer:
             if checker == 0:
                 return i
 
-    def send_open_chat_room(self, s, port):
-        data = json.dumps(['/open_chat_room', port])
-        s.send(data.encode())
-
+    # 닉네임, 빈 방 번호와 빈 포트 번호를 받아 DB에 해당하는 채팅방 정보 작성
     def make_chat_room_db(self, nickname, empty_room_number, empty_port):
         sql = f'''INSERT INTO chat VALUES ({empty_room_number}, "{nickname}", 
         "{str(datetime.datetime.now())[:-7]}", "님이 채팅방을 생성하였습니다.", 
         "{socket.gethostbyname(socket.gethostname())}", "{empty_port}");'''
         self.execute_db(sql)
 
-    # 방 개설 여부 확인
-    def check_have_room(self, user_ip):
-        # 생성자 IP 정보를 DB에서 받아와서 현재 접속 IP와 대조함, 일치시 1, 일치하는 값 없을 시 0 반환
-        sql = f'''SELECT 생성자 FROM chat;'''
-        temp = self.execute_db(sql)
+    # /give_port 명령문
+    # DB에 기록된 채팅방의 생성자 IP를 매개로 채팅방의 포트 번호를 불러와 클라이언트에게 전달
+    def give_port(self, nickname, s):
+        sql = f'SELECT port FROM chat WHERE 생성자=(SELECT ip FROM state WHERE 닉네임="{nickname}")'
+        port = self.execute_db(sql)[0][0]
 
-        for room_maker in temp:
-            if user_ip == room_maker[0]:
-                return 1
-        return 0
+        self.send_command('/open_chat_room', port, s)
 
 
-    # DB 작업
-    @staticmethod
-    def execute_db(sql):
-        conn = pymysql.connect(user='elisa', password='0000', host='10.10.21.108', port = 3306, database='chatandgame')
-        c = conn.cursor()
-
-        # 인수로 받아온 쿼리문에 해당하는 작업 수행
-        c.execute(sql)
-        # 커밋
-        conn.commit()
-
-        c.close()
-        conn.close()
-
-        # 결과 반환
-        return c.fetchall()
-
-
+# 돌아라 돌아 ~.~
 if __name__ == '__main__':
     main_server = MainServer
     main_server()

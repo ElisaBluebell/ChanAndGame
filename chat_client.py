@@ -1,4 +1,3 @@
-import datetime
 import faulthandler
 import json
 from tkinter import messagebox, Tk
@@ -9,18 +8,18 @@ import sys
 import threading
 
 from PyQt5 import uic
-from PyQt5.QtWidgets import QApplication, QLabel, QMainWindow, QMessageBox
+from PyQt5.QtWidgets import QApplication, QLabel, QMessageBox, QWidget
 from select import *
 from socket import *
 
-room_ui = uic.loadUiType('room.ui')[0]
-qt_ui = uic.loadUiType('main.ui')[0]
+qt_ui = uic.loadUiType('main_temp.ui')[0]
 
 
-class MainWindow(QMainWindow, qt_ui):
+class MainWindow(QWidget, qt_ui):
     def __init__(self):
         super().__init__()
         self.setupUi(self)
+        self.Client.setCurrentIndex(0)
         self.welcome = QLabel(self)
 
         self.chat_client = ''
@@ -32,6 +31,7 @@ class MainWindow(QMainWindow, qt_ui):
         self.nickname_input.returnPressed.connect(self.check_nickname)
         self.make_room.clicked.connect(self.make_chat_room)
         self.room_list.clicked.connect(self.enter_chat_room)
+        self.exit.clicked.connect(self.go_main)
 
         self.connect_to_main_server()
 
@@ -133,13 +133,13 @@ class MainWindow(QMainWindow, qt_ui):
         else:
             self.nickname.setText(f'{nickname}')
             self.welcome.setText('님 환영합니다.')
-            self.welcome.setGeometry(len(nickname) * 12 + 710, 10, 85, 16)
+            self.welcome.setGeometry(len(nickname) * 12 + 690, 9, 85, 16)
 
         self.show_user_list()
 
     def make_chat_room(self):
         if not self.no_nickname():
-            data = json.dumps(['/make_chat_room', ''])
+            data = json.dumps(['/make_chat_room', f'{self.nickname.text()}'])
             self.sock.send(data.encode())
 
     def no_nickname(self):
@@ -155,30 +155,38 @@ class MainWindow(QMainWindow, qt_ui):
         tk_window.destroy()
 
     def open_chat_room(self, port):
-        self.chat_client = ChatClient()
-        # self.chat_client.show()
-        self.show_room_list()
+        self.move_to_chat_room()
+        self.connect_to_chat_room(port)
 
     def enter_chat_room(self):
         reply = QMessageBox.question(self, '입장 확인', '채팅방에 입장 하시겠습니까?', QMessageBox.Yes | QMessageBox.No,
                                      QMessageBox.No)
         if reply == QMessageBox.Yes:
-            user_name = self.room_list.currentItem().text().split('님의 방')[0]
-            # 아직 IP로 표시되기 때문에 유저명이 아닌 IP를 일단 불러옴
-            sql = f'SELECT port FROM chat WHERE 닉네임="{user_name}";'
-            port = execute_db(sql)[0][0]
-            self.chat_client = ChatClient()
-            self.chat_client.show()
+            nickname = self.room_list.currentItem().text().split('님의 방')[0]
+            self.get_port(nickname)
 
         else:
             pass
 
+    def move_to_chat_room(self):
+        self.welcome.setText('')
+        self.Client.setCurrentIndex(1)
 
-class ChatClient(QMainWindow, room_ui):
-    def __init__(self):
-        super().__init__()
-        self.setupUi(self)
-        self.setup_chatroom()
+    def connect_to_chat_room(self, port):
+        self.reinitialize_socket()
+        self.sock.connect(('10.10.21.121', port))
+
+    def reinitialize_socket(self):
+        self.socks.remove(self.sock)
+        self.sock.close()
+        self.sock = socket()
+        self.sock.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
+        self.socks.append(self.sock)
+
+
+    def get_port(self, nickname):
+        data = json.dumps(['/request_port', nickname])
+        self.sock.send(data.encode())
 
     def setup_chatroom(self):
         self.chat_list.clear()
@@ -186,16 +194,6 @@ class ChatClient(QMainWindow, room_ui):
         self.load_chat()
 
     def load_chat(self):
-        self.room_create_info()
-        self.insert_recent_chat()
-
-    def room_create_info(self):
-        # 통신 미적용으로 인해 임의로 9001번 포트 줌
-        sql = 'SELECT * FROM chat WHERE port=9001 LIMIT 5;'
-        chat_log = execute_db(sql)
-        self.chat_list.insertItem(0, f'[{chat_log[0][2][:-3]}]{chat_log[0][1]}{chat_log[0][3]}')
-
-    def insert_recent_chat(self):
         row = 1
         temp = None
 
@@ -209,6 +207,12 @@ class ChatClient(QMainWindow, room_ui):
                 self.chat_list.insertItem(row, f'[{temp[i - 1][2][5:-3]}]{temp[i - 1][1]}: {temp[i - 1][3]}')
                 row += 1
         self.chat_list.clicked.connect(self.printa)
+
+    def room_create_info(self):
+        # 통신 미적용으로 인해 임의로 9001번 포트 줌
+        sql = 'SELECT * FROM chat WHERE port=9001 LIMIT 1;'
+        chat_log = execute_db(sql)
+        self.chat_list.insertItem(0, f'[{chat_log[0][2][:-3]}]{chat_log[0][1]}{chat_log[0][3]}')
 
     def printa(self):
         # chat_list = QListWidget
@@ -229,6 +233,8 @@ class ChatClient(QMainWindow, room_ui):
     def send_chat(self):
         pass
 
+    def go_main(self):
+        self.Client.setCurrentIndex(0)
 
 # DB 작업
 def execute_db(sql):
