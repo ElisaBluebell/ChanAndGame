@@ -28,11 +28,10 @@ class WindowClass(QMainWindow, form_class[0]):
         self.room_list.clicked.connect(self.room_move)
         self.member.clicked.connect(self.show_member)
         self.invite.clicked.connect(self.show_guest)
-        print('안돼')
+        self.member_list.doubleClicked.connect(self.invitation)
         # 서버에 통신 연결
         self.c = socket(AF_INET, SOCK_STREAM)
         self.c.connect((sip, sport))
-        print('왜')
         # 스레드 동작
         cth = Thread(target=self.reception, args=(self.c,), daemon=True)
         cth.start()
@@ -109,6 +108,7 @@ class WindowClass(QMainWindow, form_class[0]):
             self.c.sendall(msg.encode())
 
     def sub_reception(self, c):
+        self.invitation_preparation = False
         while True:
             try:
                 r_msg = c.recv(1024)
@@ -117,13 +117,24 @@ class WindowClass(QMainWindow, form_class[0]):
             except:
                 break
             if r_msg[0] == '목록':
+                self.invitation_preparation = False
                 self.member_list.clear()
                 for i in r_msg[1]:
                     self.member_list.addItem(f'{i[1]}[{i[0]}, {i[2]}]')
             elif r_msg[0] == '초대목록':
-                self.member_list.clear()
-                for i in r_msg[1]:
-                    self.member_list.addItem(f'{i[1]}[{i[0]}, {i[2]}]')
+                if not self.invitation_preparation:
+                    self.member_list.clear()
+                    for i in r_msg[1]:
+                        self.member_list.addItem(f'{i[1]}[{i[0]}, {i[2]}]')
+                        self.invitation_preparation = True
+            elif r_msg[0] == '초대':
+                pass
+
+    def invitation(self):
+        if self.invitation_preparation:
+            invite = self.member_list.currentItem().text()
+            msg = json.dumps(['초대', invite])
+            self.c.sendall(msg.encode())
 
     def show_member(self):
         msg = json.dumps(['목록'])
