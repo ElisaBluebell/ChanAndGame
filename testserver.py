@@ -33,6 +33,7 @@ class MainServer:
         self.port = 9000
         self.s.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
         self.s.bind((self.ip, self.port))
+        print('대기중...')
         self.s.listen(100)
         self.accept_client()
 
@@ -104,7 +105,7 @@ class MainServer:
         execute_db(sql)
         msg = json.dumps([r_msg[0], port])
         c.sendall(msg.encode())
-        ChatServer(port)
+        ChatServer(self, port)
 
     def room_confirm(self, c, ip):
         sql = f'SELECT DISTINCT 방번호, 생성자 FROM chat where 생성자 = "{ip}";'
@@ -120,7 +121,7 @@ class MainServer:
             execute_db(sql)
             msg = json.dumps(['방생성', 'True', port])
             c.sendall(msg.encode())
-            ChatServer(port)
+            ChatServer(self, port)
         else:
             msg = json.dumps(['방생성', 'False'])
             c.sendall(msg.encode())
@@ -185,7 +186,9 @@ class MainServer:
 
 
 class ChatServer:
-    def __init__(self, port):
+    def __init__(self, p, port):
+
+        self.p = p
 
         self.clients = list()
         # 소켓 세팅
@@ -229,6 +232,13 @@ class ChatServer:
                 self.member_check(c)
             elif r_msg[0] == '초대목록':
                 self.guest_check(c)
+            elif r_msg[0] == '초대':
+                self.invite(c, r_msg)
+
+    def invite(self, c, r_msg):
+
+        print(r_msg)
+        pass
 
     def guest_check(self, c):
         sql = f'select * from state where port !="{self.port}" and port !=0;'
