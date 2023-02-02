@@ -170,9 +170,9 @@ class MainServer:
         # 결과 반환
         return c.fetchall()
 
-    # 초기 세팅 종료
+    # 초기 설정 종료
 
-    # 명령문 수신 및 전송
+    # 이하 명령문 송수신
 
     # 명령문 커넥션
     def command_processor(self, user_ip, message, s):

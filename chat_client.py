@@ -1,7 +1,5 @@
 import faulthandler
 import json
-from tkinter import messagebox, Tk
-
 import pymysql
 import socket
 import sys
@@ -11,6 +9,7 @@ from PyQt5 import uic
 from PyQt5.QtWidgets import QApplication, QLabel, QMessageBox, QWidget
 from select import *
 from socket import *
+from tkinter import messagebox, Tk
 
 qt_ui = uic.loadUiType('main_temp.ui')[0]
 
@@ -35,6 +34,7 @@ class MainWindow(QWidget, qt_ui):
 
         self.connect_to_main_server()
 
+    # 메인 서버로 연결하는 스레드, 소켓 옵션 부여 등 기본 설정 후 get_message 함수 스레드로 동작
     def connect_to_main_server(self):
         self.sock.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
 
@@ -44,6 +44,7 @@ class MainWindow(QWidget, qt_ui):
         get_message = threading.Thread(target=self.get_message, daemon=True)
         get_message.start()
 
+    # 수신한 메시지를 원래 형태로 복원하여 명령 부분으로 전송
     def get_message(self):
         while True:
             r_sock, w_sock, e_sock = select(self.socks, [], [], 0)
@@ -54,15 +55,24 @@ class MainWindow(QWidget, qt_ui):
                         print(f'받은 메시지: {message}')
                         self.command_processor(message[0], message[1])
 
+    def send_command(self, command, content):
+        data = json.dumps([command, content])
+        self.sock.send(data.encode())
+
+    # 초기 설정 종료
+
+    # 이하 명령문 송수신
+
+    # 명령문 커넥트
     def command_processor(self, command, content):
-        if command == '/set_nickname_complete' or command == '/set_nickname_label':
+        if command == '/setup_nickname':
+            self.setup_nickname()
+
+        elif command == '/set_nickname_complete' or command == '/set_nickname_label':
             self.show_nickname(content)
 
         elif command == '/nickname_exists':
             self.nickname_exists()
-
-        elif command == '/setup_nickname':
-            self.setup_nickname()
 
         elif command == '/set_user_list':
             self.set_user_list(content)
@@ -76,26 +86,52 @@ class MainWindow(QWidget, qt_ui):
         elif command == '/open_chat_room':
             self.open_chat_room(content)
 
+    # /setup_nickname 명령문
+    # 서버에 닉네임 설정 프로세스를 요청을 보내고 닉네임 입력창을 클리어
+    def setup_nickname(self):
+        self.send_command('/setup_nickname', self.nickname_input.text())
+        self.nickname_input.clear()
+
+    # /show_nickname 명령문
+    # 전달받은 닉네임을 메인 화면에 출력
+    def show_nickname(self, nickname):
+        # 해당 IP로 이전에 닉네임을 설정한 기록이 없을 경우 닉네임을 전달받지 못함. 닉네임 설정 메시지 출력
+        if not nickname:
+            self.welcome.setText('')
+            self.nickname.setText('닉네임을 설정해주세요.')
+
+        # 닉네임 기록이 존재할 경우 닉네임 출력
+        else:
+            self.nickname.setText(f'{nickname}')
+            self.welcome.setText('님 환영합니다.')
+            self.welcome.setGeometry(len(nickname) * 12 + 690, 9, 85, 16)
+        # 및 유저 리스트 출력함
+        self.show_user_list()
+
+    # DB에서 현재 port가 9000(메인)인 유저들을 불러와서 accessor_list에 출력함
+    def show_user_list(self):
+        # 기존 접속자 리스트 초기화
+        self.accessor_list.clear()
+        self.send_command('/get_main_user_list', '')
+
+    # 닉네임 입력 체크
     def check_nickname(self):
+        # 닉네임 입력 칸이 비어있을 경우
         if self.nickname_input.text() == '':
+            # 스레드 작동중 PyQt를 이용해 새 창을 띄우면 프로그램이 터져 TKinter를 이용해 메세지 창 출력
             tk_window = Tk()
+            # TKinter를 이용해 메세지 창을 출력하면 새 창이 함께 출력되기 때문에 새 창을 보이지 않는 곳으로 보냄
             tk_window.geometry("0x0+3000+6000")
             messagebox.showinfo('닉네임 미입력', '닉네임을 입력하세요.')
+            # 메세지 창 닫힐 시 TKinter 새 창도 닫음
             tk_window.destroy()
 
         else:
-            self.check_nickname_exist()
+            # 닉네임이 정상적으로 입력되었을 경우 서버에 닉네임 중복 확인 요청
+            self.send_command('/check_nickname_exist', self.nickname_input.text())
 
-    def check_nickname_exist(self):
-        data = json.dumps(['/check_nickname_exist', self.nickname_input.text()])
-        self.sock.send(data.encode())
-
-    def setup_nickname(self):
-        data = json.dumps(['/setup_nickname', self.nickname_input.text()])
-        self.sock.send(data.encode())
-
-        self.nickname_input.clear()
-
+    # /nickname_exisis 명령문
+    # 닉네임 중복임을 알리는 알림창을 출력하고 닉네임 입력칸 클리어
     def nickname_exists(self):
         tk_window = Tk()
         tk_window.geometry("0x0+3000+6000")
@@ -104,89 +140,84 @@ class MainWindow(QWidget, qt_ui):
 
         self.nickname_input.clear()
 
-    # DB에서 현재 port가 9000(메인화면이라고 가정)인 유저들을 불러와서 accessor_list에 출력함
-    def show_user_list(self):
-        self.accessor_list.clear()
-        data = json.dumps(['/get_main_user_list', ''])
-        self.sock.send(data.encode())
-
+    # /set_user_list 명령문
+    # 서버로부터 전달받은 유저 목록을 유저 목록 창에 출력하고 서버에 채팅방 목록을 요청함
     def set_user_list(self, login_user_list):
         for i in range(len(login_user_list)):
             self.accessor_list.insertItem(i, login_user_list[i])
 
         self.show_room_list()
 
+    # 채팅방 목록을 초기화하고 서버에 채팅방 목록을 요청하는 명령문 전송
     def show_room_list(self):
         self.room_list.clear()
-        data = json.dumps(['/get_room_list', ''])
-        self.sock.send(data.encode())
+        self.send_command('/get_room_list', '')
 
+    # /set_room_list 명령문
+    # 서버로부터 전달받은 채팅방 목록을 채팅방 목록 창에 출력함
     def set_room_list(self, room_list):
         for i in range(len(room_list)):
             self.room_list.insertItem(i, f'{room_list[i][1]}님의 방')
 
-    def show_nickname(self, nickname):
-        if not nickname:
-            self.welcome.setText('')
-            self.nickname.setText('닉네임을 설정해주세요.')
-
-        else:
-            self.nickname.setText(f'{nickname}')
-            self.welcome.setText('님 환영합니다.')
-            self.welcome.setGeometry(len(nickname) * 12 + 690, 9, 85, 16)
-
-        self.show_user_list()
-
-    def make_chat_room(self):
-        if not self.no_nickname():
-            data = json.dumps(['/make_chat_room', f'{self.nickname.text()}'])
-            self.sock.send(data.encode())
-
-    def no_nickname(self):
-        if self.nickname.text() == '닉네임을 설정해주세요.':
-            QMessageBox.warning(self, '닉네임 설정', '닉네임 설정이 필요합니다.')
-            return 1
-        return 0
-
+    # /room_exists 명령문
+    # 유저가 이미 채팅방을 개설했을 경우 서버로부터 해당 정보를 전달받아 알림창 출력
     def room_exists(self):
         tk_window = Tk()
         tk_window.geometry("0x0+3000+6000")
         messagebox.showinfo('생성 불가', '이미 생성된 방이 있습니다.')
         tk_window.destroy()
 
+    # 방 만들기 버튼 클릭
+    # 닉네임 설정 유무를 확인한 뒤 서버에 채팅창 생성을 요청
+    def make_chat_room(self):
+        if not self.no_nickname():
+            self.send_command('/make_chat_room', f'{self.nickname.text()}')
+
+    # 닉네임 설정 여부를 판별하여 닉네임이 설정되지 않은 상태에서 채팅방 개설 시도시 생성 요청 알림창 출력 
+    def no_nickname(self):
+        if self.nickname.text() == '닉네임을 설정해주세요.':
+            QMessageBox.warning(self, '닉네임 설정', '닉네임 설정이 필요합니다.')
+            return 1
+
+        return 0
+
+    # /open_chat_room 명령문
+    # 소켓 커넥션을 채팅방으로 변경하고 채팅방 페이지를 출력
     def open_chat_room(self, port):
-        self.move_to_chat_room()
         self.connect_to_chat_room(port)
+        self.move_to_chat_room()
 
-    def enter_chat_room(self):
-        reply = QMessageBox.question(self, '입장 확인', '채팅방에 입장 하시겠습니까?', QMessageBox.Yes | QMessageBox.No,
-                                     QMessageBox.No)
-        if reply == QMessageBox.Yes:
-            nickname = self.room_list.currentItem().text().split('님의 방')[0]
-            self.get_port(nickname)
-
-        else:
-            pass
-
-    def move_to_chat_room(self):
-        self.welcome.setText('')
-        self.Client.setCurrentIndex(1)
-
+    # 서버와 연결된 소켓 정보를 초기화한 뒤 서버로부터 전달받은 채팅방 포트로 재연결
     def connect_to_chat_room(self, port):
         self.reinitialize_socket()
         self.sock.connect(('10.10.21.121', port))
 
     def reinitialize_socket(self):
+        # 소켓 리스트에서 소켓 제거 후 소켓 닫음
         self.socks.remove(self.sock)
         self.sock.close()
+        
+        # 소켓 재정의 및 리스트에 추가
         self.sock = socket()
         self.sock.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
         self.socks.append(self.sock)
+        
+    # 환영 문구를 제거하고 위젯의 스택을 채팅방으로 옮김
+    def move_to_chat_room(self):
+        self.welcome.setText('')
+        self.Client.setCurrentIndex(1)
 
+    # 채팅방 이름 더블클릭
+    # 채팅방 입장 확인을 받고 채팅방 입장 결정시 서버에 해당 채팅방의 포트를 요청
+    def enter_chat_room(self):
+        reply = QMessageBox.question(self, '입장 확인', '채팅방에 입장 하시겠습니까?', QMessageBox.Yes | QMessageBox.No,
+                                     QMessageBox.No)
+        if reply == QMessageBox.Yes:
+            nickname = self.room_list.currentItem().text().split('님의 방')[0]
+            self.send_command('/request_port', nickname)
 
-    def get_port(self, nickname):
-        data = json.dumps(['/request_port', nickname])
-        self.sock.send(data.encode())
+        else:
+            pass
 
     def setup_chatroom(self):
         self.chat_list.clear()
@@ -194,25 +225,27 @@ class MainWindow(QWidget, qt_ui):
         self.load_chat()
 
     def load_chat(self):
-        row = 1
-        temp = None
-
-        try:
-            sql = 'SELECT * FROM chat WHERE port=9001 ORDER BY 시간 DESC LIMIT 21;'
-            temp = execute_db(sql)
-        except:
-            pass
-        if temp is not None:
-            for i in range(len(temp), 1, -1):
-                self.chat_list.insertItem(row, f'[{temp[i - 1][2][5:-3]}]{temp[i - 1][1]}: {temp[i - 1][3]}')
-                row += 1
-        self.chat_list.clicked.connect(self.printa)
+        pass
+        # row = 1
+        # temp = None
+        #
+        # try:
+        #     sql = 'SELECT * FROM chat WHERE port=9001 ORDER BY 시간 DESC LIMIT 21;'
+        #     temp = execute_db(sql)
+        # except:
+        #     pass
+        # if temp is not None:
+        #     for i in range(len(temp), 1, -1):
+        #         self.chat_list.insertItem(row, f'[{temp[i - 1][2][5:-3]}]{temp[i - 1][1]}: {temp[i - 1][3]}')
+        #         row += 1
+        # self.chat_list.clicked.connect(self.printa)
 
     def room_create_info(self):
-        # 통신 미적용으로 인해 임의로 9001번 포트 줌
-        sql = 'SELECT * FROM chat WHERE port=9001 LIMIT 1;'
-        chat_log = execute_db(sql)
-        self.chat_list.insertItem(0, f'[{chat_log[0][2][:-3]}]{chat_log[0][1]}{chat_log[0][3]}')
+        pass
+        # # 통신 미적용으로 인해 임의로 9001번 포트 줌
+        # sql = 'SELECT * FROM chat WHERE port=9001 LIMIT 1;'
+        # chat_log = execute_db(sql)
+        # self.chat_list.insertItem(0, f'[{chat_log[0][2][:-3]}]{chat_log[0][1]}{chat_log[0][3]}')
 
     def printa(self):
         # chat_list = QListWidget
@@ -234,7 +267,12 @@ class MainWindow(QWidget, qt_ui):
         pass
 
     def go_main(self):
+        self.connect_to_main()
         self.Client.setCurrentIndex(0)
+
+    def connect_to_main(self):
+        self.reinitialize_socket()
+        self.sock.connect(('10.10.21.121', 9000))
 
 # DB 작업
 def execute_db(sql):
