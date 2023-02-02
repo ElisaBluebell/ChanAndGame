@@ -70,6 +70,12 @@ class MainWindow(QMainWindow, qt_ui):
         elif command == '/set_room_list':
             self.set_room_list(content)
 
+        elif command == '/room_already_exists':
+            self.room_exists()
+
+        elif command == '/open_chat_room':
+            self.open_chat_room(content)
+
     def check_nickname(self):
         if self.nickname_input.text() == '':
             tk_window = Tk()
@@ -132,53 +138,26 @@ class MainWindow(QMainWindow, qt_ui):
         self.show_user_list()
 
     def make_chat_room(self):
-        if self.check_have_room() == 1:
-            QMessageBox.information(self, '생성 불가', '이미 생성된 방이 있습니다.')
+        if not self.no_nickname():
+            data = json.dumps(['/make_chat_room', ''])
+            self.sock.send(data.encode())
 
-        else:
-            # 빈 방 체크
-            empty_room_number = self.empty_number_checker('방번호', 1, 100)
-            empty_port = self.empty_number_checker('port', 9001, 9100)
-
-            sql = f'''INSERT INTO chat VALUES ({empty_room_number}, "{self.nickname.text()}", 
-            "{str(datetime.datetime.now())[:-7]}", "님이 채팅방을 생성하였습니다.", 
-            "{socket.gethostbyname(socket.gethostname())}", "{empty_port}");'''
-            execute_db(sql)
-
-            self.chat_client = ChatClient()
-            self.chat_client.show()
-            self.show_room_list()
-
-    # 빈 숫자 확인을 위한 함수, 매개변수(칼럼명, 시작값, 종료값)
-    def empty_number_checker(self, item, start, end):
-        sql = f'SELECT {item} FROM chat;'
-        number_list = execute_db(sql)
-
-        # 시작값부터 종료값까지 반복문을 실행해 중간에 비어있는 값을 찾는다.
-        for i in range(start, end):
-            # 번호 확인을 위한 변수 선언
-            checker = 0
-
-            # DB에서 받아온 번호가 i값과 같을 시 반복문 정지
-            for number in number_list:
-                if number[0] == i:
-                    checker = 1
-                    break
-
-            # i값과 동일한 번호가 없을 경우 i값 반환
-            if checker == 0:
-                return i
-
-    # 방 개설 여부 확인
-    def check_have_room(self):
-        # 생성자 IP 정보를 DB에서 받아와서 현재 접속 IP와 대조함, 일치시 1, 일치하는 값 없을 시 0 반환
-        sql = f'''SELECT 닉네임 FROM chat;'''
-        temp = execute_db(sql)
-
-        for room_maker in temp:
-            if self.nickname.text() == room_maker[0]:
-                return 1
+    def no_nickname(self):
+        if self.nickname.text() == '닉네임을 설정해주세요.':
+            QMessageBox.warning(self, '닉네임 설정', '닉네임 설정이 필요합니다.')
+            return 1
         return 0
+
+    def room_exists(self):
+        tk_window = Tk()
+        tk_window.geometry("0x0+3000+6000")
+        messagebox.showinfo('생성 불가', '이미 생성된 방이 있습니다.')
+        tk_window.destroy()
+
+    def open_chat_room(self, port):
+        self.chat_client = ChatClient()
+        # self.chat_client.show()
+        self.show_room_list()
 
     def enter_chat_room(self):
         reply = QMessageBox.question(self, '입장 확인', '채팅방에 입장 하시겠습니까?', QMessageBox.Yes | QMessageBox.No,

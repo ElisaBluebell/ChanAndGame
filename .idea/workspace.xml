@@ -7,6 +7,7 @@
     <list default="true" id="12a35f88-34b3-481c-9af1-3bacfbe34dfa" name="Changes" comment="230202 ElisaBluebell">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/chat_client.py" beforeDir="false" afterPath="$PROJECT_DIR$/chat_client.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/chat_server.py" beforeDir="false" afterPath="$PROJECT_DIR$/chat_server.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -109,7 +110,7 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="testclient" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+    <configuration name="new" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="ChanAndGame" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -121,7 +122,7 @@
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/testclient.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/new.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -152,19 +153,19 @@
       <method v="2" />
     </configuration>
     <list>
+      <item itemvalue="Python.new" />
       <item itemvalue="Python.chat_client" />
       <item itemvalue="Python.chat_server" />
       <item itemvalue="Python.jy_chat_server" />
-      <item itemvalue="Python.testclient" />
       <item itemvalue="Python.testserver" />
     </list>
     <recent_temporary>
       <list>
         <item itemvalue="Python.chat_client" />
+        <item itemvalue="Python.new" />
         <item itemvalue="Python.chat_server" />
         <item itemvalue="Python.jy_chat_server" />
         <item itemvalue="Python.testserver" />
-        <item itemvalue="Python.testclient" />
       </list>
     </recent_temporary>
   </component>
@@ -478,7 +479,14 @@
       <option name="project" value="LOCAL" />
       <updated>1675302636862</updated>
     </task>
-    <option name="localTasksCounter" value="44" />
+    <task id="LOCAL-00044" summary="230202 ElisaBluebell">
+      <created>1675302920095</created>
+      <option name="number" value="00044" />
+      <option name="presentableId" value="LOCAL-00044" />
+      <option name="project" value="LOCAL" />
+      <updated>1675302920095</updated>
+    </task>
+    <option name="localTasksCounter" value="45" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">

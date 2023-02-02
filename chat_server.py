@@ -1,3 +1,4 @@
+import datetime
 import json
 import pymysql
 import socket
@@ -108,6 +109,9 @@ class MainServer:
         elif command == '/get_room_list':
             self.get_room_list(s)
 
+        elif command == '/make_chat_room':
+            self.make_chat_room(user_ip, content, s)
+
     def set_client_default(self, c_sock, ip):
         # 접속한 유저의 DB상 포트 번호(현재 상태)를 9000번(메인 접속, 기본)으로 변경
         self.set_user_status_login(ip)
@@ -210,6 +214,65 @@ class MainServer:
             room_list.append(temp[i])
 
         return room_list
+
+    # 채팅방 생성 및 입장# 채팅방 생성 및 입장# 채팅방 생성 및 입장# 채팅방 생성 및 입장# 채팅방 생성 및 입장# 채팅방 생성 및 입장# 채팅방 생성 및 입장
+    def make_chat_room(self, user_ip, nickname, s):
+        if self.check_have_room(user_ip) == 1:
+            self.room_already_exists(s)
+
+        else:
+            # 빈 방 체크
+            empty_room_number = self.empty_number_checker('방번호', 1, 100)
+            empty_port = self.empty_number_checker('port', 9001, 9100)
+
+            self.make_chat_room_db(nickname, empty_room_number, empty_port)
+
+            self.send_open_chat_room(s, empty_port)
+
+    def room_already_exists(self, s):
+        data = json.dumps(['/room_already_exists', ''])
+        s.send(data.encode())
+
+    # 빈 숫자 확인을 위한 함수, 매개변수(칼럼명, 시작값, 종료값)
+    def empty_number_checker(self, item, start, end):
+        sql = f'SELECT {item} FROM chat;'
+        number_list = self.execute_db(sql)
+
+        # 시작값부터 종료값까지 반복문을 실행해 중간에 비어있는 값을 찾는다.
+        for i in range(start, end):
+            # 번호 확인을 위한 변수 선언
+            checker = 0
+
+            # DB에서 받아온 번호가 i값과 같을 시 반복문 정지
+            for number in number_list:
+                if number[0] == i:
+                    checker = 1
+                    break
+
+            # i값과 동일한 번호가 없을 경우 i값 반환
+            if checker == 0:
+                return i
+
+    def send_open_chat_room(self, s, port):
+        data = json.dumps(['/open_chat_room', port])
+        s.send(data.encode())
+
+    def make_chat_room_db(self, nickname, empty_room_number, empty_port):
+        sql = f'''INSERT INTO chat VALUES ({empty_room_number}, "{nickname}", 
+        "{str(datetime.datetime.now())[:-7]}", "님이 채팅방을 생성하였습니다.", 
+        "{socket.gethostbyname(socket.gethostname())}", "{empty_port}");'''
+        self.execute_db(sql)
+
+    # 방 개설 여부 확인
+    def check_have_room(self, user_ip):
+        # 생성자 IP 정보를 DB에서 받아와서 현재 접속 IP와 대조함, 일치시 1, 일치하는 값 없을 시 0 반환
+        sql = f'''SELECT 생성자 FROM chat;'''
+        temp = self.execute_db(sql)
+
+        for room_maker in temp:
+            if user_ip == room_maker[0]:
+                return 1
+        return 0
 
 
     # DB 작업
