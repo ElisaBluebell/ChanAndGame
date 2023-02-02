@@ -92,6 +92,11 @@ class MainServer:
                         self.connection_lost(s)
                         continue
 
+    # 명령을 전송하는 함수
+    def send_command(self, command, content, s):
+        data = json.dumps([command, content])
+        s.send(data.encode())
+
     def connection_lost(self, s):
         # DB상 유저 상태 변경 함수 실행
         self.set_user_status_logout(s.getpeername()[0])
@@ -128,6 +133,39 @@ class MainServer:
         elif command == '/request_port':
             self.give_port(content, s)
 
+    # /setup_nickname 명령문
+    def setup_nickname(self, user_ip, nickname, s):
+        # 유저 IP에 해당하는 닉네임과 상태 정보 삭제
+        self.delete_nickname_from_database(user_ip)
+
+        # 유저 IP에 해당하는 닉네임과 상태 정보 생성
+        self.create_nickname_in_database(user_ip, nickname)
+
+        # 닉네임 세팅 종료를 알리는 메세지 설정 및 전송
+        self.send_command('/set_nickname_complete', nickname, s)
+
+    def delete_nickname_from_database(self, user_ip):
+        sql = f'DELETE FROM state WHERE ip="{user_ip}";'
+        self.execute_db(sql)
+
+    def create_nickname_in_database(self, user_ip, nickname):
+        sql = f'INSERT INTO state VALUES ("{user_ip}", "{nickname}", 9000);'
+        self.execute_db(sql)
+
+    # /check_nickname_exists 명령문
+    def check_nickname_exist(self, nickname, s):
+        checker = 0
+        sql = 'SELECT 닉네임 FROM state;'
+        temp = self.execute_db(sql)
+
+        for i in range(len(temp)):
+            if nickname == temp[i][0]:
+                self.send_command('/nickname_exists', '', s)
+                checker = 1
+
+        if checker == 0:
+            self.send_command('/setup_nickname', nickname, s)
+
     def set_client_default(self, c_sock, ip, port):
         # 접속한 유저의 DB상 포트 번호(현재 상태)를 9000번(메인 접속, 기본)으로 변경
         self.set_user_status_login(ip, port)
@@ -152,44 +190,7 @@ class MainServer:
         except IndexError:
             nickname = ''
 
-        # 닉네임 라벨 설정을 명령하는 메세지 설정
-        data = json.dumps(['/set_nickname_label', nickname])
-        # 자료형 변환하여 전송
-        c_sock.send(data.encode())
-
-    def check_nickname_exist(self, nickname, s):
-        checker = 0
-        sql = 'SELECT 닉네임 FROM state;'
-        temp = self.execute_db(sql)
-
-        for i in range(len(temp)):
-            if nickname == temp[i][0]:
-                data = json.dumps(['/nickname_exists', ''])
-                s.send(data.encode())
-                checker = 1
-
-        if checker == 0:
-            data = json.dumps(['/setup_nickname', nickname])
-            s.send(data.encode())
-
-    def setup_nickname(self, user_ip, nickname, s):
-        # 유저 IP에 해당하는 닉네임과 상태 정보 삭제
-        self.delete_nickname_from_database(user_ip)
-
-        # 유저 IP에 해당하는 닉네임과 상태 정보 생성
-        self.create_nickname_in_database(user_ip, nickname)
-
-        # 닉네임 세팅 종료를 알리는 메세지 설정 및 전송
-        data = json.dumps(['/set_nickname_complete', nickname])
-        s.send(data.encode())
-
-    def delete_nickname_from_database(self, user_ip):
-        sql = f'DELETE FROM state WHERE ip="{user_ip}";'
-        self.execute_db(sql)
-
-    def create_nickname_in_database(self, user_ip, nickname):
-        sql = f'INSERT INTO state VALUES ("{user_ip}", "{nickname}", 9000);'
-        self.execute_db(sql)
+        self.send_command('/set_nickname_label', nickname, c_sock)
 
     def send_message(self):
         pass
@@ -198,7 +199,7 @@ class MainServer:
         sql = 'SELECT 닉네임 FROM state WHERE port=9000;'
         temp = self.execute_db(sql)
         login_user_list = self.array_user_list(temp)
-        self.send_main_user_list(login_user_list, s)
+        self.send_command('/set_user_list', login_user_list, s)
 
     def array_user_list(self, temp):
         login_user_list = []
@@ -208,21 +209,11 @@ class MainServer:
 
         return login_user_list
 
-    def send_main_user_list(self, user_list, s):
-        data = json.dumps(['/set_user_list', user_list])
-        print(data)
-        s.send(data.encode())
-
     def get_room_list(self, s):
         sql = 'SELECT DISTINCT a.방번호, b.닉네임 FROM chat AS a INNER JOIN state AS b on a.생성자=b.ip;'
         temp = self.execute_db(sql)
         room_list = self.array_room_list(temp)
-        self.send_room_list(room_list, s)
-
-    def send_room_list(self, room_list, s):
-        data = json.dumps(['/set_room_list', room_list])
-        print(data)
-        s.send(data.encode())
+        self.send_command('/set_room_list', room_list, s)
 
     def array_room_list(self, temp):
         room_list = []
@@ -232,10 +223,10 @@ class MainServer:
 
         return room_list
 
-    # 채팅방 생성 및 입장# 채팅방 생성 및 입장# 채팅방 생성 및 입장# 채팅방 생성 및 입장# 채팅방 생성 및 입장# 채팅방 생성 및 입장# 채팅방 생성 및 입장
+    # 채팅방 생성 및 입장
     def make_chat_room(self, user_ip, nickname, s):
         if self.check_have_room(user_ip) == 1:
-            self.room_already_exists(s)
+            self.send_command('/room_already_exists', '', s)
 
         else:
             # 빈 방 체크
@@ -243,12 +234,7 @@ class MainServer:
             empty_port = self.empty_number_checker('port', 9001, 9100)
 
             self.make_chat_room_db(nickname, empty_room_number, empty_port)
-
-            self.send_open_chat_room(s, empty_port)
-
-    def room_already_exists(self, s):
-        data = json.dumps(['/room_already_exists', ''])
-        s.send(data.encode())
+            self.send_command('/open_chat_room', empty_port, s)
 
     # 빈 숫자 확인을 위한 함수, 매개변수(칼럼명, 시작값, 종료값)
     def empty_number_checker(self, item, start, end):
@@ -269,10 +255,6 @@ class MainServer:
             # i값과 동일한 번호가 없을 경우 i값 반환
             if checker == 0:
                 return i
-
-    def send_open_chat_room(self, s, port):
-        data = json.dumps(['/open_chat_room', port])
-        s.send(data.encode())
 
     def make_chat_room_db(self, nickname, empty_room_number, empty_port):
         sql = f'''INSERT INTO chat VALUES ({empty_room_number}, "{nickname}", 
@@ -296,8 +278,7 @@ class MainServer:
         sql = f'SELECT port FROM chat WHERE 생성자=(SELECT ip FROM state WHERE 닉네임="{nickname}")'
         port = self.execute_db(sql)[0][0]
 
-        data = json.dumps(['/open_chat_room', port])
-        s.send(data.encode())
+        self.send_command('/open_chat_room', port, s)
 
     # DB 작업
     @staticmethod

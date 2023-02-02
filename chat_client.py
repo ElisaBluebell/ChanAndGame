@@ -194,16 +194,6 @@ class MainWindow(QWidget, qt_ui):
         self.load_chat()
 
     def load_chat(self):
-        self.room_create_info()
-        self.insert_recent_chat()
-
-    def room_create_info(self):
-        # 통신 미적용으로 인해 임의로 9001번 포트 줌
-        sql = 'SELECT * FROM chat WHERE port=9001 LIMIT 5;'
-        chat_log = execute_db(sql)
-        self.chat_list.insertItem(0, f'[{chat_log[0][2][:-3]}]{chat_log[0][1]}{chat_log[0][3]}')
-
-    def insert_recent_chat(self):
         row = 1
         temp = None
 
@@ -217,6 +207,12 @@ class MainWindow(QWidget, qt_ui):
                 self.chat_list.insertItem(row, f'[{temp[i - 1][2][5:-3]}]{temp[i - 1][1]}: {temp[i - 1][3]}')
                 row += 1
         self.chat_list.clicked.connect(self.printa)
+
+    def room_create_info(self):
+        # 통신 미적용으로 인해 임의로 9001번 포트 줌
+        sql = 'SELECT * FROM chat WHERE port=9001 LIMIT 1;'
+        chat_log = execute_db(sql)
+        self.chat_list.insertItem(0, f'[{chat_log[0][2][:-3]}]{chat_log[0][1]}{chat_log[0][3]}')
 
     def printa(self):
         # chat_list = QListWidget
