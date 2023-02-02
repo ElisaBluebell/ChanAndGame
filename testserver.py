@@ -69,6 +69,7 @@ class MainServer:
                 msg = json.dumps(['초기닉네임', str(c_ip[0][1])])
 
             c.sendall(msg.encode())
+            self.show_list()
 
             # 스레드 동작
             cth = Thread(target=self.reception, args=(c, ip))
@@ -77,18 +78,19 @@ class MainServer:
     # 수신
     def reception(self, c, ip):
         while True:
-            self.show_list()
             r_msg = c.recv(1024)
             r_msg = json.loads(r_msg.decode())
             if r_msg[0] == '나감':
                 sql = f'update state set port ="0" where ip = "{ip}";'
                 execute_db(sql)
+                c.close()
                 print(f'{ip} 연결 종료')
                 break
             elif r_msg[0] == '닉네임':
                 self.set_nickname(c, ip, r_msg)
             elif r_msg[0] == '방만들기':
                 self.room_confirm(c, ip)
+            self.show_list()
 
     def room_confirm(self, c, ip):
         sql = f'SELECT DISTINCT 방번호, 생성자 FROM chat where 생성자 = "{ip}";'
@@ -102,7 +104,7 @@ class MainServer:
             execute_db(sql)
             msg = json.dumps(['방생성', 'True', port])
             c.sendall(msg.encode())
-            # ChatServer(port)
+            ChatServer(port)
         else:
             msg = json.dumps(['방생성', 'False'])
             c.sendall(msg.encode())
@@ -140,7 +142,10 @@ class MainServer:
         for client in self.clients:
             s, (ip, port) = client
             msg = json.dumps(['목록', acc, room])
-            s.sendall(msg.encode())
+            try:
+                s.sendall(msg.encode())
+            except:
+                pass
 
     # 클라에서 닉네임 설정 버튼을 누르면 중복확인 및 DB에 닉네임 저장
     def set_nickname(self, c, ip, r_msg):

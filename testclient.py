@@ -1,4 +1,7 @@
 import sys
+import threading
+import time
+
 from PyQt5.QtWidgets import *
 from PyQt5 import uic
 from socket import *
@@ -15,16 +18,14 @@ class WindowClass(QMainWindow, form_class):
     def __init__(self, sip, sport):
         super().__init__()
         self.setupUi(self)
-
+        self.show()
         self.ip = sip
-
-        # 서버에 통신 연결
-        self.c = socket(AF_INET, SOCK_STREAM)
-        self.c.connect((sip, sport))
 
         self.make_room.clicked.connect(self.roommake)
         self.set_nickname.clicked.connect(self.nickmake)
-
+        # 서버에 통신 연결
+        self.c = socket(AF_INET, SOCK_STREAM)
+        self.c.connect((sip, sport))
         # 스레드 동작
         self.thread_start()
 
@@ -57,8 +58,7 @@ class WindowClass(QMainWindow, form_class):
             elif r_msg[0] == '방생성':
                 if r_msg[1] == 'True':
                     print(f'{r_msg[2]}방 생성')
-                    # chatroom = ChatClient(self, self.ip, r_msg[2])
-                    # chatroom.show()
+                    self.chatroom = ChatClient(self, self.ip, r_msg[2])
                 else:
                     print('방있음')
             else:
@@ -88,13 +88,12 @@ class ChatClient(QMainWindow, room_ui):
         self.setupUi(self)
 
         self.p = parent
-
         self.c = socket(AF_INET, SOCK_STREAM)
         self.c.connect((ip, port))
+        self.show()
 
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     myWindow = WindowClass(ip, port)
-    myWindow.show()
     app.exec_()
