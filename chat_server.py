@@ -9,6 +9,9 @@ class MainServer:
     def __init__(self):
         # 소켓 리스트
         self.sock_list = []
+
+        self.server_list = []
+
         # 데이터 사이즈
         self.BUFFER = 1024
         # 서버 오픈을 위한 포트와 아이피
@@ -33,27 +36,40 @@ class MainServer:
 
         # 소켓 리스트에 서버 소켓 추가
         self.sock_list.append(self.s_sock)
+        self.server_list.append(self.s_sock)
+        self.initialize_chat_socket()
         # 포트 번호를 알림
         print(f'Waiting Connections on Port {self.port}...')
+
+    def initialize_chat_socket(self):
+        for i in range(9001, 9101):
+            globals()['port' + str(i)] = socket.socket()
+
+            globals()['port' + str(i)].setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            globals()['port' + str(i)].bind((self.ip, i))
+            globals()['port' + str(i)].listen()
+
+            self.sock_list.append(globals()['port' + str(i)])
+            self.server_list.append(globals()['port' + str(i)])
 
     def receive_command(self):
         while True:
             # 읽기, 쓰기, 오류 소켓 리스트를 넌블로킹 모드로 선언
             r_sock, w_sock, e_sock = select.select(self.sock_list, [], [], 0)
             for s in r_sock:
-
-                if s == self.s_sock:
+                if s in self.server_list:
                     # 접속받은 소켓과 주소 설정
-                    c_sock, addr = self.s_sock.accept()
+                    c_sock, addr = s.accept()
                     # 클라이언트 소켓을 소켓 리스트에 추가함
                     self.sock_list.append(c_sock)
                     # 해당 주소의 접속을 콘솔에 출력
                     print(f'Client{addr} connected')
                     # 클라이언트의 초기 설정
-                    self.set_client_default(c_sock, addr[0])
+                    self.set_client_default(c_sock, addr[0], s.getsockname()[1])
 
                 else:
                     try:
+                        print(s)
                         # 받아온 바이트 데이터를 디코딩
                         data = s.recv(self.BUFFER).decode()
                         # 송신자와 데이터 확인을 위해 콘솔창 출력
@@ -65,9 +81,6 @@ class MainServer:
                             message = eval(data)
                             # 명령 실행 함수로 이동(송신자와, 데이터를 가지고)
                             self.command_processor(s.getpeername()[0], message, s)
-                            # # 수신한 명령 에코
-                            # command_taken = json.dumps(['the last command was' + message[0], message[1]])
-                            # s.send(command_taken.encode())
 
                         # 유언을 받은 경우
                         if not data:
@@ -112,14 +125,18 @@ class MainServer:
         elif command == '/make_chat_room':
             self.make_chat_room(user_ip, content, s)
 
-    def set_client_default(self, c_sock, ip):
-        # 접속한 유저의 DB상 포트 번호(현재 상태)를 9000번(메인 접속, 기본)으로 변경
-        self.set_user_status_login(ip)
-        # 클라이언트의 닉네임 라벨을 현재 접속한 ip에 맞게 변경하는 [명령문, 닉네임] 전송
-        self.set_client_nickname_label(c_sock, ip)
+        elif command == '/request_port':
+            self.give_port(content, s)
 
-    def set_user_status_login(self, ip):
-        sql = f'UPDATE state SET port=9000 WHERE ip="{ip}"'
+    def set_client_default(self, c_sock, ip, port):
+        # 접속한 유저의 DB상 포트 번호(현재 상태)를 9000번(메인 접속, 기본)으로 변경
+        self.set_user_status_login(ip, port)
+        if port == 9000:
+            # 클라이언트의 닉네임 라벨을 현재 접속한 ip에 맞게 변경하는 [명령문, 닉네임] 전송
+            self.set_client_nickname_label(c_sock, ip)
+
+    def set_user_status_login(self, ip, port):
+        sql = f'UPDATE state SET port={port} WHERE ip="{ip}"'
         self.execute_db(sql)
 
     def set_user_status_logout(self, ip):
@@ -274,6 +291,13 @@ class MainServer:
                 return 1
         return 0
 
+    def give_port(self, nickname, s):
+        print(1)
+        sql = f'SELECT port FROM chat WHERE 생성자=(SELECT ip FROM state WHERE 닉네임="{nickname}")'
+        port = self.execute_db(sql)[0][0]
+
+        data = json.dumps(['/open_chat_room', port])
+        s.send(data.encode())
 
     # DB 작업
     @staticmethod
