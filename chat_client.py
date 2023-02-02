@@ -117,7 +117,7 @@ class MainWindow(QMainWindow, qt_ui):
 
     def set_room_list(self, room_list):
         for i in range(len(room_list)):
-            self.room_list.insertItem(i, f'[{room_list[i][0]}번] {room_list[i][1]}님의 방')
+            self.room_list.insertItem(i, f'{room_list[i][1]}님의 방')
 
     def show_nickname(self, nickname):
         if not nickname:
@@ -186,7 +186,7 @@ class MainWindow(QMainWindow, qt_ui):
         if reply == QMessageBox.Yes:
             user_name = self.room_list.currentItem().text().split('님의 방')[0]
             # 아직 IP로 표시되기 때문에 유저명이 아닌 IP를 일단 불러옴
-            sql = f'SELECT port FROM chat WHERE 생성자="{user_name}";'
+            sql = f'SELECT port FROM chat WHERE 닉네임="{user_name}";'
             port = execute_db(sql)[0][0]
             self.chat_client = ChatClient()
             self.chat_client.show()
