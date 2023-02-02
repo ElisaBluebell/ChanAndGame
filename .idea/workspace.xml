@@ -152,11 +152,11 @@
       <method v="2" />
     </configuration>
     <list>
-      <item itemvalue="Python.new" />
-      <item itemvalue="Python.test" />
       <item itemvalue="Python.클라이언트" />
       <item itemvalue="Python.chat_client" />
       <item itemvalue="Python.chat_server" />
+      <item itemvalue="Python.new" />
+      <item itemvalue="Python.test" />
     </list>
     <recent_temporary>
       <list>

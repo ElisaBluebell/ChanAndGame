@@ -236,7 +236,6 @@ class ChatServer:
                 self.invite(c, r_msg)
 
     def invite(self, c, r_msg):
-
         print(r_msg)
         pass
 
