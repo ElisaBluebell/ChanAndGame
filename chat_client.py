@@ -172,11 +172,11 @@ class MainWindow(QMainWindow, qt_ui):
     # 방 개설 여부 확인
     def check_have_room(self):
         # 생성자 IP 정보를 DB에서 받아와서 현재 접속 IP와 대조함, 일치시 1, 일치하는 값 없을 시 0 반환
-        sql = f'''SELECT 생성자 FROM chat;'''
+        sql = f'''SELECT 닉네임 FROM chat;'''
         temp = execute_db(sql)
 
         for room_maker in temp:
-            if socket.gethostbyname(socket.gethostname()) == room_maker[0]:
+            if self.nickname.text() == room_maker[0]:
                 return 1
         return 0
 
