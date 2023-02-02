@@ -34,7 +34,6 @@ class MainWindow(QMainWindow, qt_ui):
         self.room_list.clicked.connect(self.enter_chat_room)
 
         self.connect_to_main_server()
-        self.show_room_list()
 
     def connect_to_main_server(self):
         self.sock.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
@@ -52,7 +51,7 @@ class MainWindow(QMainWindow, qt_ui):
                 for s in r_sock:
                     if s == self.sock:
                         message = eval(self.sock.recv(self.BUFFER).decode())
-                        print(message)
+                        print(f'받은 메시지: {message}')
                         self.command_processor(message[0], message[1])
 
     def command_processor(self, command, content):
@@ -67,6 +66,9 @@ class MainWindow(QMainWindow, qt_ui):
 
         elif command == '/set_user_list':
             self.set_user_list(content)
+
+        elif command == '/set_room_list':
+            self.set_room_list(content)
 
     def check_nickname(self):
         if self.nickname_input.text() == '':
@@ -106,13 +108,16 @@ class MainWindow(QMainWindow, qt_ui):
         for i in range(len(login_user_list)):
             self.accessor_list.insertItem(i, login_user_list[i])
 
+        self.show_room_list()
+
     def show_room_list(self):
         self.room_list.clear()
-        sql = 'SELECT DISTINCT 방번호, 생성자 FROM chat;'
-        temp = execute_db(sql)
+        data = json.dumps(['/get_room_list', ''])
+        self.sock.send(data.encode())
 
-        for i in range(len(temp)):
-            self.room_list.insertItem(i, f'{temp[i][1]}님의 방')
+    def set_room_list(self, room_list):
+        for i in range(len(room_list)):
+            self.room_list.insertItem(i, f'[{room_list[i][0]}번] {room_list[i][1]}님의 방')
 
     def show_nickname(self, nickname):
         if not nickname:
@@ -218,7 +223,6 @@ class ChatClient(QMainWindow, room_ui):
         try:
             sql = 'SELECT * FROM chat WHERE port=9001 ORDER BY 시간 DESC LIMIT 21;'
             temp = execute_db(sql)
-            print(temp)
         except:
             pass
         if temp is not None:

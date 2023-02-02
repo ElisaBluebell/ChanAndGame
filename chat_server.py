@@ -89,13 +89,10 @@ class MainServer:
         self.sock_list.remove(s)
 
     def command_processor(self, user_ip, message, s):
-        # 메세지 확인을 위한 출력
-        print(f'메시지: {message}')
-        print(type(message))
-
         # 명령문과 컨텐츠 구분
         command = message[0]
         content = message[1]
+        print(f'command: {command}, content: {content}')
 
         # 커맨드에 해당하는 명령 실행
         if command == '/setup_nickname':
@@ -107,6 +104,9 @@ class MainServer:
 
         elif command == '/get_main_user_list':
             self.get_main_user_list(s)
+
+        elif command == '/get_room_list':
+            self.get_room_list(s)
 
     def set_client_default(self, c_sock, ip):
         # 접속한 유저의 DB상 포트 번호(현재 상태)를 9000번(메인 접속, 기본)으로 변경
@@ -184,12 +184,33 @@ class MainServer:
 
         for i in range(len(temp)):
             login_user_list.append(temp[i][0])
+
         return login_user_list
 
     def send_main_user_list(self, user_list, s):
         data = json.dumps(['/set_user_list', user_list])
         print(data)
         s.send(data.encode())
+
+    def get_room_list(self, s):
+        sql = 'SELECT DISTINCT a.방번호, b.닉네임 FROM chat AS a INNER JOIN state AS b on a.생성자=b.ip;'
+        temp = self.execute_db(sql)
+        room_list = self.array_room_list(temp)
+        self.send_room_list(room_list, s)
+
+    def send_room_list(self, room_list, s):
+        data = json.dumps(['/set_room_list', room_list])
+        print(data)
+        s.send(data.encode())
+
+    def array_room_list(self, temp):
+        room_list = []
+
+        for i in range(len(temp)):
+            room_list.append(temp[i])
+
+        return room_list
+
 
     # DB 작업
     @staticmethod
