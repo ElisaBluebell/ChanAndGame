@@ -5,6 +5,7 @@ from socket import *
 from threading import *
 import json
 
+room_ui = uic.loadUiType('room.ui')[0]
 form_class = uic.loadUiType("main.ui")[0]
 ip = '10.10.21.108'
 port = 9000
@@ -15,6 +16,8 @@ class WindowClass(QMainWindow, form_class):
         super().__init__()
         self.setupUi(self)
 
+        self.ip = sip
+
         # 서버에 통신 연결
         self.c = socket(AF_INET, SOCK_STREAM)
         self.c.connect((sip, sport))
@@ -23,10 +26,12 @@ class WindowClass(QMainWindow, form_class):
         self.set_nickname.clicked.connect(self.nickmake)
 
         # 스레드 동작
+        self.thread_start()
+
+    def thread_start(self):
         cth = Thread(target=self.reception, args=(self.c,))
         cth.start()
 
-    # 수신
     def reception(self, c):
         while True:
             r_msg = c.recv(1024)
@@ -41,30 +46,51 @@ class WindowClass(QMainWindow, form_class):
                     self.nickname.setText(f'{r_msg[0][1]}님 환영합니다.')
                     self.nickname_input.clear()
                 else:
-                    # QMessageBox.warning(self, '안내창', '닉네임이 중복되었습니다.')
                     self.nickname_input.clear()
-            elif r_msg[0] == '접속자':
+            elif r_msg[0] == '목록':
                 self.accessor_list.clear()
+                self.room_list.clear()
                 for i in r_msg[1]:
                     self.accessor_list.addItem(f'{i[1]}[{i[0]}, {i[2]}]')
+                for i in r_msg[2]:
+                    self.room_list.addItem(f'{i[0]}번 방, {i[1]}님의 방입니다.')
+            elif r_msg[0] == '방생성':
+                if r_msg[1] == 'True':
+                    print(f'{r_msg[2]}방 생성')
+                    # chatroom = ChatClient(self, self.ip, r_msg[2])
+                    # chatroom.show()
+                else:
+                    print('방있음')
+            else:
+                print('접속 종료')
+                break
 
     # 방만들기
     def roommake(self):
-        print('아직')
+        msg = json.dumps(['방만들기'])
+        self.c.sendall(msg.encode())
 
     # 닉네임 설정 하기
     def nickmake(self):
         nick = self.nickname_input.text()
         if nick:
-            msg = ['닉네임', nick]
-            msg = json.dumps(msg)
+            msg = json.dumps(['닉네임', nick])
             self.c.sendall(msg.encode())
 
     def closeEvent(self, e):
-        msg = ['나감', '']
-        msg = json.dumps(msg)
+        msg = json.dumps(['나감'])
         self.c.sendall(msg.encode())
-        print('나감')
+
+
+class ChatClient(QMainWindow, room_ui):
+    def __init__(self, parent, ip, port):
+        super().__init__()
+        self.setupUi(self)
+
+        self.p = parent
+
+        self.c = socket(AF_INET, SOCK_STREAM)
+        self.c.connect((ip, port))
 
 
 if __name__ == "__main__":

@@ -1,5 +1,3 @@
-import threading
-import time
 from socket import *
 from threading import *
 import pymysql as p
@@ -11,22 +9,20 @@ cuser = 'root'
 cpw = '0000'
 cdb = 'chatandgame'
 
+
 def execute_db(sql):
     conn = p.connect(host=chost, port=cport, user=cuser, password=cpw, db=cdb, charset='utf8')
     c = conn.cursor()
-
     # 인수로 받아온 쿼리문에 해당하는 작업 수행
     c.execute(sql)
     # 커밋
     conn.commit()
-
     conn.close()
-
     # 결과 반환
     return c.fetchall()
 
 
-class MultiChatServer:
+class MainServer:
 
     def __init__(self):
 
@@ -59,7 +55,7 @@ class MultiChatServer:
 
             # 닉네임 확인
             try:
-                sql = f'select ip, 닉네임 from state;'
+                sql = f'select ip, 닉네임 from state where ip = "{ip}";'
                 c_ip = execute_db(sql)
 
                 if c_ip[0][1] == '':
@@ -91,6 +87,49 @@ class MultiChatServer:
                 break
             elif r_msg[0] == '닉네임':
                 self.set_nickname(c, ip, r_msg)
+            elif r_msg[0] == '방만들기':
+                self.room_confirm(c, ip)
+
+    def room_confirm(self, c, ip):
+        sql = f'SELECT DISTINCT 방번호, 생성자 FROM chat where 생성자 = "{ip}";'
+        con = execute_db(sql)
+        if not con:
+            num = self.room_number()
+            port = self.port_number()
+            sql = f"select 닉네임 from state where ip ='{ip}';"
+            name = execute_db(sql)[0][0]
+            sql = f"insert into chat values ({num}, '{name}', now(), '님이 채팅방을 생성하였습니다.', '{ip}','{port}' )"
+            execute_db(sql)
+            msg = json.dumps(['방생성', 'True', port])
+            c.sendall(msg.encode())
+            # ChatServer(port)
+        else:
+            msg = json.dumps(['방생성', 'False'])
+            c.sendall(msg.encode())
+
+    def room_number(self):
+        sql = f"select distinct 방번호 from chat;"
+        room = execute_db(sql)
+        roomnum = 0
+        while True:
+            roomnum += 1
+            for i in room:
+                if roomnum in i:
+                    continue
+                else:
+                    return roomnum
+
+    def port_number(self):
+        sql = f"select distinct port from chat;"
+        port = execute_db(sql)
+        portnum = 9000
+        while True:
+            portnum += 1
+            for i in port:
+                if portnum in i:
+                    continue
+                else:
+                    return portnum
 
     # 대기창에서 접속자, 방목로 보여주기
     def show_list(self):
@@ -124,7 +163,28 @@ class MultiChatServer:
             c.sendall(msg.encode())
 
 
+class ChatServer:
+    def __init__(self, port):
+
+        self.clients = list()
+        # 소켓 세팅
+        self.s = socket(AF_INET, SOCK_STREAM)
+        self.ip = '10.10.21.108'
+        self.port = port
+        self.s.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
+        self.s.bind((self.ip, self.port))
+        print(f'{port}방 입장 대기중...')
+        self.s.listen(5)
+        self.accept_client()
+
+    def accept_client(self):
+        while True:
+            # 클라 소켓 생성 및 클라 ip,port 받기
+            client = c, (ip, port) = self.s.accept()
+            if client not in self.clients:
+                self.clients.append(client)
+            print(f'{self.port}방에 {ip} : {port} 가 연결되었습니다.')
+
+
 if __name__ == '__main__':
-    MultiChatServer()
-
-
+    MainServer()
