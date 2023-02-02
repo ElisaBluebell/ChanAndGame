@@ -33,7 +33,6 @@ class MainServer:
         self.port = 9000
         self.s.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
         self.s.bind((self.ip, self.port))
-        print('클라이언트 대기중...')
         self.s.listen(100)
         self.accept_client()
 
@@ -72,14 +71,16 @@ class MainServer:
             self.show_list()
 
             # 스레드 동작
-            cth = Thread(target=self.reception, args=(c, ip))
+            cth = Thread(target=self.reception, args=(c, ip), daemon=True)
             cth.start()
 
     # 수신
     def reception(self, c, ip):
         while True:
+            self.show_list()
             r_msg = c.recv(1024)
             r_msg = json.loads(r_msg.decode())
+            print('main server', r_msg)
             if r_msg[0] == '나감':
                 sql = f'update state set port ="0" where ip = "{ip}";'
                 execute_db(sql)
@@ -90,7 +91,20 @@ class MainServer:
                 self.set_nickname(c, ip, r_msg)
             elif r_msg[0] == '방만들기':
                 self.room_confirm(c, ip)
-            self.show_list()
+            elif r_msg[0] == '방이동':
+                self.move_room(c, ip, r_msg)
+            else:
+                pass
+        print(f'{ip} 연결 종료')
+
+    def move_room(self, c, ip, r_msg):
+        sql = f"select distinct port from chat where 방번호 = '{r_msg[1]}'"
+        port = execute_db(sql)[0][0]
+        sql = f"update state set port= '{port}' where ip = '{ip}';"
+        execute_db(sql)
+        msg = json.dumps([r_msg[0], port])
+        c.sendall(msg.encode())
+        ChatServer(port)
 
     def room_confirm(self, c, ip):
         sql = f'SELECT DISTINCT 방번호, 생성자 FROM chat where 생성자 = "{ip}";'
@@ -101,6 +115,8 @@ class MainServer:
             sql = f"select 닉네임 from state where ip ='{ip}';"
             name = execute_db(sql)[0][0]
             sql = f"insert into chat values ({num}, '{name}', now(), '님이 채팅방을 생성하였습니다.', '{ip}','{port}' )"
+            execute_db(sql)
+            sql = f"update state set port= '{port}' where ip = '{ip}';"
             execute_db(sql)
             msg = json.dumps(['방생성', 'True', port])
             c.sendall(msg.encode())
@@ -189,6 +205,55 @@ class ChatServer:
             if client not in self.clients:
                 self.clients.append(client)
             print(f'{self.port}방에 {ip} : {port} 가 연결되었습니다.')
+
+            cth = Thread(target=self.reception, args=(c, ip), daemon=True)
+            cth.start()
+
+    def reception(self, c, ip):
+        self.show_member()
+        while True:
+            try:
+                r_msg = c.recv(1024)
+                r_msg = json.loads(r_msg.decode())
+                print('sub server', r_msg)
+            except:
+                break
+            if r_msg[0] == '나감':
+                sql = f'update state set port ="0" where ip = "{ip}";'
+                execute_db(sql)
+                c.close()
+                self.show_member()
+                print(f'{ip} 연결 종료')
+                break
+            elif r_msg[0] == '목록':
+                self.member_check(c)
+            elif r_msg[0] == '초대목록':
+                self.guest_check(c)
+
+    def guest_check(self, c):
+        sql = f'select * from state where port !="{self.port}" and port !=0;'
+        member = execute_db(sql)
+        print(member)
+        msg = json.dumps(['초대목록', member])
+        c.sendall(msg.encode())
+
+    def show_member(self):
+        sql = f'select * from state where port ="{self.port}";'
+        member = execute_db(sql)
+        for client in self.clients:
+            s, (ip, port) = client
+            msg = json.dumps(['목록', member])
+            try:
+                s.sendall(msg.encode())
+            except:
+                pass
+
+    def member_check(self, c):
+        sql = f'select * from state where port ="{self.port}";'
+        member = execute_db(sql)
+        msg = json.dumps(['목록', member])
+        c.sendall(msg.encode())
+
 
 
 if __name__ == '__main__':
