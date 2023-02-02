@@ -242,13 +242,15 @@ class MainServer:
             self.send_command('/setup_nickname', nickname, s)
 
     # /get_main_user_list 명령문
-    # DB를 통해 현재 메인 페이지 접속중인 유저 정보를 불러와 클라이언트로 전송
+    # DB를 통해 현재 메인 페이지 접속중인 유저 정보를 불러와 클라이언트에게 전달
     def get_main_user_list(self, s):
         sql = 'SELECT 닉네임 FROM state WHERE port=9000;'
         temp = self.execute_db(sql)
+        # 데이터 전송을 위해 유저 정보를 리스트로 정리
         login_user_list = self.array_user_list(temp)
         self.send_command('/set_user_list', login_user_list, s)
 
+    # 반복문을 활용해 인수로 받은 유저 정보를 리스트로 만들어 반환
     @staticmethod
     def array_user_list(temp):
         login_user_list = []
@@ -258,12 +260,16 @@ class MainServer:
 
         return login_user_list
 
+    # /get_room_list 명령문
+    # DB를 통해 현재 개설된 채팅방의 정보를 정리하여 클라이언트에게 전달
     def get_room_list(self, s):
         sql = 'SELECT DISTINCT a.방번호, b.닉네임 FROM chat AS a INNER JOIN state AS b on a.생성자=b.ip;'
         temp = self.execute_db(sql)
+        # 반복문을 활용해 유저 정보를 리스트로 만들어서 전송
         room_list = self.array_room_list(temp)
         self.send_command('/set_room_list', room_list, s)
 
+    # 리스트화 로직은 array_user_list 함수와 같으나 DB에서 가져온 묶음 형태의 데이터를 그대로 전송하기에 신규 작성함
     @staticmethod
     def array_room_list(temp):
         room_list = []
@@ -273,18 +279,34 @@ class MainServer:
 
         return room_list
 
+    # /make_chat_room 명령문
     # 채팅방 생성 및 입장
     def make_chat_room(self, user_ip, nickname, s):
+        # 해당 유저의 방 개설 정보 확인
         if self.check_have_room(user_ip) == 1:
+            # 방이 이미 존재할 경우 중복 생성 불가함을 클라이언트에게 전달
             self.send_command('/room_already_exists', '', s)
 
+        # 해당 유저가 방을 개설하지 않았을 경우
         else:
-            # 빈 방 체크
-            empty_room_number = self.empty_number_checker('방번호', 1, 100)
-            empty_port = self.empty_number_checker('port', 9001, 9100)
+            # 빈 방 번호와 부여할 포트 번호 체크, 방 번호는 1번부터 100번까지, 포트 번호는 9001번부터 9100번까지 사용
+            empty_room_number = self.empty_number_checker('방번호', 1, 101)
+            empty_port = self.empty_number_checker('port', 9001, 9101)
 
+            # 채팅방 DB를 만들고
             self.make_chat_room_db(nickname, empty_room_number, empty_port)
+            # 해당 채팅방 개설과 관련된 작업을 클라이언트에게 지시
             self.send_command('/open_chat_room', empty_port, s)
+
+    # 생성자 IP 정보를 DB에서 받아와서 현재 접속 IP와 대조함, 일치시 1, 일치하는 값 없을 시 0 반환
+    def check_have_room(self, user_ip):
+        sql = f'''SELECT 생성자 FROM chat;'''
+        temp = self.execute_db(sql)
+
+        for room_maker in temp:
+            if user_ip == room_maker[0]:
+                return 1
+        return 0
 
     # 빈 숫자 확인을 위한 함수, 매개변수(칼럼명, 시작값, 종료값)
     def empty_number_checker(self, item, start, end):
@@ -293,7 +315,7 @@ class MainServer:
 
         # 시작값부터 종료값까지 반복문을 실행해 중간에 비어있는 값을 찾는다.
         for i in range(start, end):
-            # 번호 확인을 위한 변수 선언
+            # 번호 존재를 체크하기 위한 변수 선언
             checker = 0
 
             # DB에서 받아온 번호가 i값과 같을 시 반복문 정지
@@ -306,31 +328,23 @@ class MainServer:
             if checker == 0:
                 return i
 
+    # 닉네임, 빈 방 번호와 빈 포트 번호를 받아 DB에 해당하는 채팅방 정보 작성
     def make_chat_room_db(self, nickname, empty_room_number, empty_port):
         sql = f'''INSERT INTO chat VALUES ({empty_room_number}, "{nickname}", 
         "{str(datetime.datetime.now())[:-7]}", "님이 채팅방을 생성하였습니다.", 
         "{socket.gethostbyname(socket.gethostname())}", "{empty_port}");'''
         self.execute_db(sql)
 
-    # 방 개설 여부 확인
-    def check_have_room(self, user_ip):
-        # 생성자 IP 정보를 DB에서 받아와서 현재 접속 IP와 대조함, 일치시 1, 일치하는 값 없을 시 0 반환
-        sql = f'''SELECT 생성자 FROM chat;'''
-        temp = self.execute_db(sql)
-
-        for room_maker in temp:
-            if user_ip == room_maker[0]:
-                return 1
-        return 0
-
+    # /give_port 명령문
+    # DB에 기록된 채팅방의 생성자 IP를 매개로 채팅방의 포트 번호를 불러와 클라이언트에게 전달
     def give_port(self, nickname, s):
-        print(1)
         sql = f'SELECT port FROM chat WHERE 생성자=(SELECT ip FROM state WHERE 닉네임="{nickname}")'
         port = self.execute_db(sql)[0][0]
 
         self.send_command('/open_chat_room', port, s)
 
 
+# 돌아라 돌아 ~.~
 if __name__ == '__main__':
     main_server = MainServer
     main_server()
