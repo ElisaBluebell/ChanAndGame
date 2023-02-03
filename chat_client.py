@@ -6,13 +6,13 @@ import threading
 import time
 
 from PyQt5 import uic
-from PyQt5.QtWidgets import QApplication, QLabel, QMessageBox, QWidget, QStackedWidget
+from PyQt5.QtWidgets import QApplication, QLabel, QMessageBox, QWidget
 from select import *
 from socket import *
 from tkinter import messagebox, Tk
 
 qt_ui = uic.loadUiType('main_temp.ui')[0]
-my_ip = '10.10.21.108'
+my_ip = gethostbyname(gethostname())
 
 
 class MainWindow(QWidget, qt_ui):
@@ -273,7 +273,7 @@ class MainWindow(QWidget, qt_ui):
 
     def send_chat(self):
         chat_content = self.chat.text()
-        print(chat_content)
+        self.send_command('/chat', chat_content)
         self.chat.clear()
 
     def go_main(self):

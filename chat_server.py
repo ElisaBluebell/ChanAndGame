@@ -11,16 +11,16 @@ class MainServer:
 
     def __init__(self):
         # 소켓 리스트
-        self.sock_list = []
+        self.client_list = []
         self.server_list = []
 
+        # 서버 소켓 생성
+        self.s_sock = socket.socket()
         # 데이터 사이즈
         self.BUFFER = 1024
         # 서버 오픈을 위한 포트와 아이피
-        self.ip = '10.10.21.108'
+        self.ip = socket.gethostbyname(socket.gethostname())
         self.port = 9000
-        # 서버 소켓 생성
-        self.s_sock = socket.socket()
 
         # 소켓 설정
         self.initialize_socket()
@@ -37,7 +37,7 @@ class MainServer:
         self.s_sock.listen()
 
         # 소켓 리스트와 서버 소켓 리스트에 서버 소켓 추가
-        self.sock_list.append(self.s_sock)
+        self.client_list.append(self.s_sock)
         self.server_list.append(self.s_sock)
         # 채팅 소켓 초기 설정 함수 호출
         self.initialize_chat_socket()
@@ -57,14 +57,14 @@ class MainServer:
             globals()['port' + str(i)].listen()
 
             # 소켓 리스트와 서버 소켓 리스트에 반복생성한 함수 추가
-            self.sock_list.append(globals()['port' + str(i)])
+            self.client_list.append(globals()['port' + str(i)])
             self.server_list.append(globals()['port' + str(i)])
 
     # 명령문 받기 함수
     def receive_command(self):
         while True:
             # 읽기, 쓰기, 오류 소켓 리스트를 넌블로킹 모드로 선언
-            r_sock, w_sock, e_sock = select.select(self.sock_list, [], [], 0)
+            r_sock, w_sock, e_sock = select.select(self.client_list, [], [], 0)
             for s in r_sock:
                 if s in self.server_list:
                     # 접속받은 소켓과 주소 설정
@@ -99,7 +99,7 @@ class MainServer:
     # 클라이언트 소켓 접속시 행해지는 기본설정들
     def set_client(self, c_sock, addr, s):
         # 클라이언트 소켓을 소켓 리스트에 추가함
-        self.sock_list.append(c_sock)
+        self.client_list.append(c_sock)
         # 해당 주소의 접속을 콘솔에 출력
         print(f'Client{addr} connected')
         # 클라이언트의 초기 설정 요청
@@ -140,7 +140,7 @@ class MainServer:
         # 해당 커넥션 소켓 닫음
         s.close()
         # 소켓 리스트에서 삭제
-        self.sock_list.remove(s)
+        self.client_list.remove(s)
 
     # 접속 종료한 유저의 IP를 매개로 포트 번호 초기화
     def set_user_status_logout(self, ip):
@@ -213,6 +213,9 @@ class MainServer:
                 except:
                     pass
 
+        elif command == '/chat':
+            self.chat_process(user_ip, content, s)
+
     # /setup_nickname 명령문
     def setup_nickname(self, user_ip, nickname, s):
         # 유저 IP에 해당하는 닉네임과 상태 정보 삭제
@@ -253,13 +256,6 @@ class MainServer:
         # 일치하는 닉네임이 없을 경우 클라이언트의 닉네임으로 설정을 허가함
         if checker == 0:
             self.send_command('/setup_nickname', nickname, s)
-
-    # /get_main_user_list 명령문
-    # DB를 통해 현재 메인 페이지 접속중인 유저 정보를 불러와 클라이언트에게 전달
-    # def get_main_user_list(self, s):
-    #     login_user_list = self.get_single_item_list('닉네임', 'state', 'port', 9000)
-    #     login_user_list = self.array_list(login_user_list)
-    #     self.send_command('/set_user_list', login_user_list, s)
 
     def get_single_item_list(self, item, table, key_column, key):
         sql = f'SELECT {item} FROM {table} WHERE {key_column}={key};'
@@ -376,15 +372,38 @@ class MainServer:
             temp = self.execute_db(sql)
             # 0=방번호, 1=닉네임, 2시간, 3=채팅내용, 4=생성자, 5=포트 // 시간 닉네임 생성자 순으로 정렬
             for i in range(len(temp)):
+                print(temp)
                 if temp[i][3] == '님이 채팅방을 생성하였습니다':
-                    recent_chat.append([temp[i][2], temp[i][1], temp[i][3]])
+                    recent_chat.append([temp[i][1], temp[i][0], temp[i][2]])
                 else:
-                    recent_chat.append([temp[i][2], temp[i][1], f': {temp[i][3]}'])
+                    recent_chat.append([temp[i][1], temp[i][0], f': {temp[i][2]}'])
 
-        except:
+        finally:
             pass
 
         self.send_command('/load_recent_chat', recent_chat, s)
+
+    def chat_process(self, user, chat, s):
+        room_creator = self.seek_room_creator(s)
+        self.insert_chat_in_db(user, chat, room_creator, s)
+        self.fire_the_chat()
+
+    def seek_room_creator(self, s):
+        sql = f'SELECT 생성자 FROM chat WHERE port={s.getsockname()[1]}'
+        return self.execute_db(sql)[0][0]
+
+    def insert_chat_in_db(self, user, chat, room_creator, s):
+        sql = f'''INSERT INTO chat VALUES (
+        (SELECT 닉네임 FROM state WHERE ip='{user}'), 
+        '{str(datetime.datetime.now())[:-7]}', 
+        '{chat}', 
+        '{room_creator}', 
+        {s.getsockname()[1]}
+        )'''
+        self.execute_db(sql)
+
+    def fire_the_chat(self):
+        pass
 
     # 채팅창에서 참가자 및 초대 가능한 사람 보여주기
     def get_member_list(self, state, port, s):

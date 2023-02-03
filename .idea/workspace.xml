@@ -6,7 +6,7 @@
   <component name="ChangeListManager">
     <list default="true" id="12a35f88-34b3-481c-9af1-3bacfbe34dfa" name="Changes" comment="230203 ElisaBluebell">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/chat_client.py" beforeDir="false" afterPath="$PROJECT_DIR$/chat_client.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/chat_server.py" beforeDir="false" afterPath="$PROJECT_DIR$/chat_server.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -37,21 +37,21 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "RunOnceActivity.OpenProjectViewOnStart": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "last_opened_file_path": "C:/Users/Kiot/Desktop/JohnKParkProjects/ChatAndGame",
-    "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/Kiot/Desktop/JohnKParkProjects/ChatAndGame&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable&quot;
   },
-  "keyToStringList": {
-    "GitStage.ChangesTree.GroupingKeys": [
-      "directory",
-      "module",
-      "repository"
+  &quot;keyToStringList&quot;: {
+    &quot;GitStage.ChangesTree.GroupingKeys&quot;: [
+      &quot;directory&quot;,
+      &quot;module&quot;,
+      &quot;repository&quot;
     ]
   }
-}]]></component>
+}</component>
   <component name="RunManager" selected="Python.chat_client">
     <configuration name="chat_client" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="ChanAndGame" />
@@ -520,12 +520,12 @@
       <option name="project" value="LOCAL" />
       <updated>1675401585204</updated>
     </task>
-    <task id="LOCAL-00061" summary="230203 jyw 채팅방 맴버확인">
-      <created>1675402272430</created>
+    <task id="LOCAL-00061" summary="230203 ElisaBluebell">
+      <created>1675402630166</created>
       <option name="number" value="00061" />
       <option name="presentableId" value="LOCAL-00061" />
       <option name="project" value="LOCAL" />
-      <updated>1675402272431</updated>
+      <updated>1675402630166</updated>
     </task>
     <option name="localTasksCounter" value="62" />
     <servers />
@@ -550,9 +550,9 @@
     <MESSAGE value="230201 ElisaBluebell" />
     <MESSAGE value="test" />
     <MESSAGE value="230202 ElisaBluebell" />
-    <MESSAGE value="230203 ElisaBluebell" />
     <MESSAGE value="230203 jyw 채팅방 맴버확인" />
-    <option name="LAST_COMMIT_MESSAGE" value="230203 jyw 채팅방 맴버확인" />
+    <MESSAGE value="230203 ElisaBluebell" />
+    <option name="LAST_COMMIT_MESSAGE" value="230203 ElisaBluebell" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
