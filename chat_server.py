@@ -17,7 +17,7 @@ class MainServer:
         # 데이터 사이즈
         self.BUFFER = 1024
         # 서버 오픈을 위한 포트와 아이피
-        self.ip = '10.10.21.121'
+        self.ip = '10.10.21.108'
         self.port = 9000
         # 서버 소켓 생성
         self.s_sock = socket.socket()
@@ -385,12 +385,9 @@ class MainServer:
     # 하는중
     def get_member_list(self, user_ip, state, port, s):
         if state == 'True':
-            print('참')
-            pass
+            self.show_user(9000, s)
         else:
-            sql = f"select 닉네임 from state where port ='{port}'"
-            member = self.execute_db(sql)
-            self.send_command('/')
+            self.show_user(port, s)
 
 
 # 돌아라 돌아 ~.~

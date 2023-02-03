@@ -87,6 +87,10 @@ class MainWindow(QWidget, qt_ui):
             if self.Client.currentIndex() == 0:
                 self.set_user_list(self.accessor_list, content)
                 self.show_room_list()
+            elif self.invitation_preparation:
+                self.set_user_list(self.member_list, content)
+            elif not self.invitation_preparation:
+                self.set_user_list(self.member_list, content)
             # else:
             #     self.set_user_list(self.member_list, content)
             #     print(self.member_list)
@@ -102,6 +106,7 @@ class MainWindow(QWidget, qt_ui):
 
         elif command == '/load_recent_chat':
             self.load_recent_chat(content)
+
 
     # /setup_nickname 명령문
     # 서버에 닉네임 설정 프로세스를 요청을 보내고 닉네임 입력창을 클리어
@@ -161,6 +166,7 @@ class MainWindow(QWidget, qt_ui):
     # /set_user_list 명령문
     # 서버로부터 전달받은 유저 목록을 유저 목록 창에 출력하고 서버에 채팅방 목록을 요청함
     def set_user_list(self, target, login_user_list):
+        target.clear()
         for i in range(len(login_user_list)):
             target.insertItem(i, login_user_list[i])
 
@@ -253,8 +259,8 @@ class MainWindow(QWidget, qt_ui):
     def setup_chatroom(self):
         # 채팅창 클리어
         self.chat_list.clear()
-        self.send_command('/show_user', self.port)
-        time.sleep(0.2)
+        # self.send_command('/show_user', self.port)
+        # time.sleep(0.2)
         self.send_command('/load_chat', self.port)
 
     def load_recent_chat(self, content):
