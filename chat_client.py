@@ -110,6 +110,9 @@ class MainWindow(QWidget, qt_ui):
         elif command == '/invitation':
             self.invite_user(content)
 
+        elif command == '/print_chat':
+            self.print_chat(content)
+
         elif command == '/refuse':
             self.refuse()
 
@@ -280,7 +283,6 @@ class MainWindow(QWidget, qt_ui):
             self.reset_member_button()
             self.send_command('/request_port', nickname)
         else:
-            print('거절')
             self.send_command('/refuse', '')
         tk_window.destroy()
 
@@ -297,11 +299,15 @@ class MainWindow(QWidget, qt_ui):
         self.Client.setCurrentIndex(0)
         self.connect_to_main()
         self.chat.clear()
+        self.invitation_preparation = False
 
     def connect_to_main(self):
         self.reinitialize_socket()
         self.port = 9000
         self.sock.connect((server_ip, self.port))
+
+    def print_chat(self, content):
+        self.chat_list.addItem(content)
 
     # 채팅창에서 참가자 보기 버튼 눌렸을때
     def click_member(self):

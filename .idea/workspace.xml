@@ -5,8 +5,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="12a35f88-34b3-481c-9af1-3bacfbe34dfa" name="Changes" comment="230203 ElisaBluebell">
+      <change beforePath="$PROJECT_DIR$/.idea/ChanAndGame.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/ChanAndGame.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/chat_server.py" beforeDir="false" afterPath="$PROJECT_DIR$/chat_server.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -52,7 +53,7 @@
     ]
   }
 }</component>
-  <component name="RunManager" selected="Python.chat_client">
+  <component name="RunManager" selected="Python.new">
     <configuration name="chat_client" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="ChanAndGame" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -137,7 +138,7 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="test" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+    <configuration name="new" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="ChanAndGame" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -149,7 +150,7 @@
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/test.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/new.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -159,19 +160,19 @@
       <method v="2" />
     </configuration>
     <list>
+      <item itemvalue="Python.new" />
       <item itemvalue="Python.jy_chat_client" />
       <item itemvalue="Python.jy_chat_server" />
       <item itemvalue="Python.chat_client" />
       <item itemvalue="Python.chat_server" />
-      <item itemvalue="Python.test" />
     </list>
     <recent_temporary>
       <list>
+        <item itemvalue="Python.new" />
         <item itemvalue="Python.chat_client" />
         <item itemvalue="Python.chat_server" />
         <item itemvalue="Python.jy_chat_client" />
         <item itemvalue="Python.jy_chat_server" />
-        <item itemvalue="Python.test" />
       </list>
     </recent_temporary>
   </component>
@@ -183,13 +184,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1675049941553</updated>
-    </task>
-    <task id="LOCAL-00019" summary="230131 ElisaBluebell">
-      <created>1675132850420</created>
-      <option name="number" value="00019" />
-      <option name="presentableId" value="LOCAL-00019" />
-      <option name="project" value="LOCAL" />
-      <updated>1675132850420</updated>
     </task>
     <task id="LOCAL-00020" summary="230131 ElisaBluebell">
       <created>1675133863711</created>
@@ -520,14 +514,21 @@
       <option name="project" value="LOCAL" />
       <updated>1675406119819</updated>
     </task>
-    <task id="LOCAL-00067" summary="230203 jyw 채팅방 초대중">
-      <created>1675408463938</created>
+    <task id="LOCAL-00067" summary="230203 ElisaBluebell">
+      <created>1675406305847</created>
       <option name="number" value="00067" />
       <option name="presentableId" value="LOCAL-00067" />
       <option name="project" value="LOCAL" />
-      <updated>1675408463938</updated>
+      <updated>1675406305847</updated>
     </task>
-    <option name="localTasksCounter" value="68" />
+    <task id="LOCAL-00068" summary="230203 ElisaBluebell">
+      <created>1675410149253</created>
+      <option name="number" value="00068" />
+      <option name="presentableId" value="LOCAL-00068" />
+      <option name="project" value="LOCAL" />
+      <updated>1675410149253</updated>
+    </task>
+    <option name="localTasksCounter" value="69" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
