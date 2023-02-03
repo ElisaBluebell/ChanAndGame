@@ -93,7 +93,8 @@ class MainServer:
                                 self.command_processor(s.getpeername()[0], message, s)
 
                             except TypeError:
-                                pass
+                                data = json.dumps(['/load_chat_again', ''])
+                                s.send(data.encode())
 
                         # 유언을 받은 경우
                         if not data:

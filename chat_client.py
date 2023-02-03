@@ -1,3 +1,4 @@
+import datetime
 import faulthandler
 import json
 import socket
@@ -133,7 +134,7 @@ class MainWindow(QWidget, qt_ui):
             self.refuse()
 
         elif command == '/show_user_list':
-            self.show_user_list
+            self.show_user_list()
 
         elif command == '/understaffed':
             self.understaffed()
@@ -146,6 +147,9 @@ class MainWindow(QWidget, qt_ui):
 
         elif command == '/topic':
             self.subject.setText(content)
+
+        elif command == '/load_chat_again':
+            self.load_chat_again()
 
         else:
             pass
@@ -337,7 +341,6 @@ class MainWindow(QWidget, qt_ui):
         # 채팅창 클리어
         self.chat_list.clear()
         self.send_command('/show_user', self.port)
-        # time.sleep(2)
         self.send_command('/load_chat', self.port)
 
     def load_recent_chat(self, content):
@@ -372,6 +375,9 @@ class MainWindow(QWidget, qt_ui):
         self.chat_list.addItem(content)
         time.sleep(0.1)
         self.chat_list.scrollToBottom()
+
+    def load_chat_again(self):
+        self.send_command('/load_chat', self.port)
 
     def invite_user(self, nickname):
         tk_window = Tk()
