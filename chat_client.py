@@ -159,7 +159,8 @@ class MainWindow(QWidget, qt_ui):
 
     # /set_user_list 명령문
     # 서버로부터 전달받은 유저 목록을 유저 목록 창에 출력하고 서버에 채팅방 목록을 요청함
-    def set_user_list(self, target, login_user_list):
+    @staticmethod
+    def set_user_list(target, login_user_list):
         for i in range(len(login_user_list)):
             target.insertItem(i, login_user_list[i])
 
@@ -172,7 +173,7 @@ class MainWindow(QWidget, qt_ui):
     # 서버로부터 전달받은 채팅방 목록을 채팅방 목록 창에 출력함
     def set_room_list(self, room_list):
         for i in range(len(room_list)):
-            self.room_list.insertItem(i, f'{room_list[i][1]}님의 방')
+            self.room_list.insertItem(i, f'{room_list[i][0]}님의 방')
 
     # /room_exists 명령문
     # 유저가 이미 채팅방을 개설했을 경우 서버로부터 해당 정보를 전달받아 알림창 출력
@@ -272,7 +273,7 @@ class MainWindow(QWidget, qt_ui):
 
     def send_chat(self):
         chat_content = self.chat.text()
-        print(chat_content)
+        self.send_command('/chat', chat_content)
         self.chat.clear()
 
     def go_main(self):

@@ -206,6 +206,9 @@ class MainServer:
         elif command == '/show_member':
             self.get_member_list(user_ip, content[0], content[1], s)
 
+        elif command == '/chat':
+            self.chat_process(user_ip, content, s)
+
     # /setup_nickname 명령문
     def setup_nickname(self, user_ip, nickname, s):
         # 유저 IP에 해당하는 닉네임과 상태 정보 삭제
@@ -279,7 +282,7 @@ class MainServer:
     # /get_room_list 명령문
     # DB를 통해 현재 개설된 채팅방의 정보를 정리하여 클라이언트에게 전달
     def get_room_list(self, s):
-        sql = 'SELECT DISTINCT a.방번호, b.닉네임 FROM chat AS a INNER JOIN state AS b on a.생성자=b.ip;'
+        sql = 'SELECT DISTINCT b.닉네임 FROM chat AS a INNER JOIN state AS b on a.생성자=b.ip;'
         temp = self.execute_db(sql)
         # 반복문을 활용해 유저 정보를 리스트로 만들어서 전송
         room_list = self.array_room_list(temp)
@@ -372,15 +375,36 @@ class MainServer:
             for i in range(len(temp)):
                 print(temp)
                 if temp[i][3] == '님이 채팅방을 생성하였습니다':
-                    recent_chat.append([temp[i][2], temp[i][1], temp[i][3]])
+                    recent_chat.append([temp[i][1], temp[i][0], temp[i][2]])
                 else:
-                    recent_chat.append([temp[i][2], temp[i][1], f': {temp[i][3]}'])
+                    recent_chat.append([temp[i][1], temp[i][0], f': {temp[i][2]}'])
 
-        except:
+        finally:
             pass
 
         self.send_command('/load_recent_chat', recent_chat, s)
 
+    def chat_process(self, user, chat, s):
+        room_creator = self.seek_room_creator(s)
+        self.insert_chat_in_db(user, chat, room_creator, s)
+        self.fire_the_chat()
+
+    def seek_room_creator(self, s):
+        sql = f'SELECT 생성자 FROM chat WHERE port={s.getsockname()[1]}'
+        return self.execute_db(sql)[0][0]
+
+    def insert_chat_in_db(self, user, chat, room_creator, s):
+        sql = f'''INSERT INTO chat VALUES (
+        (SELECT 닉네임 FROM state WHERE ip='{user}'), 
+        '{str(datetime.datetime.now())[:-7]}', 
+        '{chat}', 
+        '{room_creator}', 
+        {s.getsockname()[1]}
+        )'''
+        self.execute_db(sql)
+
+    def fire_the_chat(self):
+        pass
 
     # 하는중
     def get_member_list(self, user_ip, state, port, s):
