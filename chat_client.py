@@ -12,7 +12,9 @@ from socket import *
 from tkinter import messagebox, Tk
 
 qt_ui = uic.loadUiType('main_temp.ui')[0]
-my_ip = gethostbyname(gethostname())
+# my_ip = gethostbyname(gethostname())
+my_ip = '10.10.21.121'
+server_ip = '10.10.21.121'
 
 
 class MainWindow(QWidget, qt_ui):
