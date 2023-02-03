@@ -45,10 +45,21 @@ class MainWindow(QWidget, qt_ui):
 
     # 메인 서버로 연결하는 스레드, 소켓 옵션 부여 등 기본 설정 후 get_message 함수 스레드로 동작
     def connect_to_main_server(self):
-        self.sock.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
+        self.set_socket()
+        self.set_thread()
 
+    def set_socket(self):
+        self.sock.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
         self.socks.append(self.sock)
-        self.sock.connect((server_ip, self.port))
+
+        try:
+            self.sock.connect((server_ip, self.port))
+
+        except ConnectionRefusedError:
+            print('서버가 꺼져 있습니다. 프로그램을 종료합니다.')
+            exit()
+
+    def set_thread(self):
         self.thread_switch = 1
 
         get_message = threading.Thread(target=self.get_message, daemon=True)
