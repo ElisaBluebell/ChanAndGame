@@ -15,6 +15,7 @@ class MainServer:
         self.client_list = []
         self.chat_list = []
         self.server_list = []
+        self.past_message = []
 
         # 서버 소켓 생성
         self.s_sock = socket.socket()
@@ -46,7 +47,7 @@ class MainServer:
         # 채팅 소켓 초기 설정 함수 호출
         self.initialize_chat_socket()
         # 포트 번호를 알림
-        print(f'Waiting Connections on Port {self.port}...')
+        print(f'접속 대기중 {self.port}...')
 
     # 채팅 소켓 설정 함수
     def initialize_chat_socket(self):
@@ -68,7 +69,7 @@ class MainServer:
     def receive_command(self):
         while True:
             # 읽기, 쓰기, 오류 소켓 리스트를 넌블로킹 모드로 선언
-            r_sock, w_sock, e_sock = select.select(self.client_list, [], [], 0)
+            r_sock, w_sock, e_sock = select.select(self.client_list, [], [], 2)
             for s in r_sock:
                 if s in self.server_list:
                     # 접속받은 소켓과 주소 설정
@@ -81,7 +82,7 @@ class MainServer:
                         # 받아온 바이트 데이터를 디코딩
                         data = s.recv(self.BUFFER).decode('utf-8')
                         # 송신자와 데이터 확인을 위해 콘솔창 출력
-                        print(f'Received: {s.getpeername()}: {data}')
+                        print(f'받은 메시지> {s.getpeername()}: {data} [{datetime.datetime.now()}]')
 
                         # 실제 데이터를 수신한 경우
                         if data:
@@ -93,20 +94,22 @@ class MainServer:
                         # 유언을 받은 경우
                         if not data:
                             # 시체를 안고 커넥션 로스트 함수로
-                            self.connection_lost(s)
+                            self.connection_lost(s, c_sock)
                             continue
 
                     except ConnectionResetError:
-                        self.connection_lost(s)
+                        self.connection_lost(s, c_sock)
                         continue
 
     # 클라이언트 소켓 접속시 행해지는 기본설정들
     def set_client(self, c_sock, addr, s):
+        self.renew_user_list(s)
+        time.sleep(0.5)
         # 클라이언트 소켓을 소켓 리스트에 추가함
         self.client_list.append(c_sock)
         self.chat_list.append(c_sock)
         # 해당 주소의 접속을 콘솔에 출력
-        print(f'Client{addr} connected')
+        print(f'클라이언트 {addr} 접속')
         # 클라이언트의 초기 설정 요청
         self.set_client_default(c_sock, addr[0], s.getsockname()[1])
 
@@ -137,16 +140,20 @@ class MainServer:
         self.send_command('/set_nickname_complete', nickname, c_sock)
 
     # 연결 소실시 행해지는 작업
-    def connection_lost(self, s):
+    def connection_lost(self, s, c_sock):
         # DB상 유저 상태 변경 함수 실행
         self.set_user_status_logout(s.getpeername()[0])
         # 커넥션 로스트 상태 확인을 위한 출력
-        print(f'Client{s.getpeername()} is offline')
+        print(f'클라이언트 {s.getpeername()} 접속 종료')
+
         # 해당 커넥션 소켓 닫음
         s.close()
         # 소켓 리스트에서 삭제
         self.client_list.remove(s)
         self.chat_list.remove(s)
+
+        time.sleep(0.5)
+        self.renew_user_list(c_sock)
 
     # 접속 종료한 유저의 IP를 매개로 포트 번호 초기화
     def set_user_status_logout(self, ip):
@@ -154,10 +161,15 @@ class MainServer:
         self.execute_db(sql)
 
     # 명령문 전송
-    @staticmethod
-    def send_command(command, content, s):
-        data = json.dumps([command, content])
-        s.send(data.encode())
+    def send_command(self, command, content, s):
+        message = [command, content, s]
+        if self.past_message == message:
+            pass
+        else:
+            data = json.dumps([command, content])
+            print(f'보낸 메시지: {data} [{datetime.datetime.now()}]')
+            s.send(data.encode())
+            self.past_message = message
 
     # DB 작업
     @staticmethod
@@ -219,6 +231,12 @@ class MainServer:
 
         elif command == '/refuse':
             self.refuse(s)
+
+        elif command == '/renew_room_list':
+            self.renew_room_list(s)
+
+        elif command == 'renew_user_list':
+            self.renew_user_list(s)
 
         elif command == '/set_game':
             self.check_game_entrant(content, s)
@@ -383,7 +401,6 @@ class MainServer:
         try:
             sql = f'SELECT * FROM chat WHERE port={chat_port} ORDER BY 시간 LIMIT 10;'
             temp = self.execute_db(sql)
-            print(temp)
             # 0=방번호, 1=닉네임, 2시간, 3=채팅내용, 4=생성자, 5=포트 // 시간 닉네임 생성자 순으로 정렬
             for i in range(len(temp)):
                 if temp[i][3] == '님이 채팅방을 생성하였습니다':
@@ -421,10 +438,7 @@ class MainServer:
         same_port_user = self.select_same_port_user(s)
 
         for sock in same_port_user:
-            print(sock)
-            print(self.s_sock)
             self.send_command('/print_chat', data, sock)
-            # time.sleep(0.2)
 
     def get_user_name(self, user):
         sql = f'SELECT 닉네임 FROM state WHERE ip="{user}"'
@@ -435,9 +449,19 @@ class MainServer:
         for sock in self.chat_list:
             if sock.getsockname()[1] == s.getsockname()[1]:
                 same_port_user.append(sock)
-                print(sock.getsockname())
 
         return same_port_user
+
+    def renew_room_list(self, s):
+        same_port_user = self.select_same_port_user(s)
+        for sock in same_port_user:
+            self.get_room_list(sock)
+
+    def renew_user_list(self, s):
+        same_port_user = self.select_same_port_user(s)
+        for sock in same_port_user:
+            self.send_command('/show_user_list', '', sock)
+
 
     # 채팅창에서 참가자 및 초대 가능한 사람 보여주기
     def get_member_list(self, state, port, s):

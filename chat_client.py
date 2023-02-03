@@ -7,13 +7,13 @@ import time
 from tkinter.simpledialog import askstring
 
 from PyQt5 import uic
-from PyQt5.QtWidgets import QApplication, QLabel, QMessageBox, QWidget
+from PyQt5.QtWidgets import QApplication, QLabel, QMessageBox, QWidget, QListWidget
 from select import *
 from socket import *
 from tkinter import messagebox, Tk
 
 qt_ui = uic.loadUiType('main_temp.ui')[0]
-server_ip = '10.10.21.108'
+server_ip = '10.10.21.121'
 
 
 class MainWindow(QWidget, qt_ui):
@@ -52,10 +52,21 @@ class MainWindow(QWidget, qt_ui):
 
     # 메인 서버로 연결하는 스레드, 소켓 옵션 부여 등 기본 설정 후 get_message 함수 스레드로 동작
     def connect_to_main_server(self):
-        self.sock.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
+        self.set_socket()
+        self.set_thread()
 
+    def set_socket(self):
+        self.sock.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
         self.socks.append(self.sock)
-        self.sock.connect((server_ip, self.port))
+
+        try:
+            self.sock.connect((server_ip, self.port))
+
+        except ConnectionRefusedError:
+            print('서버가 꺼져 있습니다. 프로그램을 종료합니다.')
+            exit()
+
+    def set_thread(self):
         self.thread_switch = 1
 
         get_message = threading.Thread(target=self.get_message, daemon=True)
@@ -65,16 +76,17 @@ class MainWindow(QWidget, qt_ui):
     def get_message(self):
         while True:
             if self.thread_switch == 1:
-                r_sock, dummy1, dummy2 = select(self.socks, [], [], 0)
+                r_sock, dummy1, dummy2 = select(self.socks, [], [], 2)
                 if r_sock:
                     for s in r_sock:
                         if s == self.sock:
                             message = eval(self.sock.recv(self.BUFFER).decode())
-                            print(f'받은 메시지: {message}')
+                            print(f'받은 메시지: {message} [{datetime.datetime.now()}]')
                             self.command_processor(message[0], message[1])
 
     def send_command(self, command, content):
         data = json.dumps([command, content])
+        print(f'보낸 메시지: {data} [{datetime.datetime.now()}]')
         self.sock.send(data.encode())
 
     # 초기 설정 종료
@@ -100,9 +112,6 @@ class MainWindow(QWidget, qt_ui):
                 self.set_user_list(self.member_list, content)
             elif not self.invitation_preparation:
                 self.set_user_list(self.member_list, content)
-            # else:
-            #     self.set_user_list(self.member_list, content)
-            #     print(self.member_list)
 
         elif command == '/set_room_list':
             self.set_room_list(content)
@@ -124,6 +133,9 @@ class MainWindow(QWidget, qt_ui):
 
         elif command == '/refuse':
             self.refuse()
+
+        elif command == '/show_user_list':
+            self.show_user_list
 
         elif command == '/understaffed':
             self.understaffed()
@@ -166,7 +178,7 @@ class MainWindow(QWidget, qt_ui):
     def show_user_list(self):
         # 기존 접속자 리스트 초기화
         self.accessor_list.clear()
-        self.member_list.clear()
+        # self.member_list.clear()
         self.send_command('/show_user', self.port)
 
     # 닉네임 입력 체크
@@ -210,6 +222,7 @@ class MainWindow(QWidget, qt_ui):
     # /set_room_list 명령문
     # 서버로부터 전달받은 채팅방 목록을 채팅방 목록 창에 출력함
     def set_room_list(self, room_list):
+        self.room_list.clear()
         for i in range(len(room_list)):
             self.room_list.insertItem(i, f'{room_list[i][1]}님의 방')
 
@@ -228,7 +241,7 @@ class MainWindow(QWidget, qt_ui):
         if not self.no_nickname():
             self.send_command('/make_chat_room', f'{self.nickname.text()}')
 
-    # 닉네임 설정 여부를 판별하여 닉네임이 설정되지 않은 상태에서 채팅방 개설 시도시 생성 요청 알림창 출력 
+    # 닉네임 설정 여부를 판별하여 닉네임이 설정되지 않은 상태에서 채팅방 개설 시도시 생성 요청 알림창 출력
     def no_nickname(self):
         if self.nickname.text() == '닉네임을 설정해주세요.':
             QMessageBox.warning(self, '닉네임 설정', '닉네임 설정이 필요합니다.')
@@ -240,6 +253,8 @@ class MainWindow(QWidget, qt_ui):
     # 소켓 커넥션을 채팅방으로 변경하고 채팅방 페이지를 출력
     def open_chat_room(self, port):
         self.port = port
+        self.send_command('/renew_room_list', '')
+        time.sleep(0.5)
         self.connect_to_chat_room()
         self.move_to_chat_room()
 
@@ -253,14 +268,14 @@ class MainWindow(QWidget, qt_ui):
         # 소켓 리스트에서 소켓 제거 후 소켓 닫음
         self.socks.remove(self.sock)
         self.sock.close()
-        
+
         # 소켓 재정의 및 리스트에 추가
         self.sock = socket()
         self.sock.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
         self.socks.append(self.sock)
 
         self.thread_switch = 1
-        
+
     # 환영 문구를 제거하고 위젯의 스택을 채팅방으로 옮김
     def move_to_chat_room(self):
         self.welcome.setText('')
@@ -285,7 +300,7 @@ class MainWindow(QWidget, qt_ui):
         # 채팅창 클리어
         self.chat_list.clear()
         self.send_command('/show_user', self.port)
-        time.sleep(0.2)
+        time.sleep(0.5)
         self.send_command('/load_chat', self.port)
 
     def load_recent_chat(self, content):
@@ -330,6 +345,19 @@ class MainWindow(QWidget, qt_ui):
 
     def print_chat(self, content):
         self.chat_list.addItem(content)
+        time.sleep(0.1)
+        self.chat_list.scrollToBottom()
+
+    def invite_user(self, nickname):
+        tk_window = Tk()
+        tk_window.geometry("0x0+3000+6000")
+        reply = messagebox.askquestion('초대장', f'{nickname}님방 에서 초대장이 왔습니다. 입장하시겠습니까?')
+        if reply == 'yes':
+            self.reset_member_button()
+            self.send_command('/request_port', nickname)
+        else:
+            self.send_command('/refuse', '')
+        tk_window.destroy()
 
     # 채팅창에서 참가자 보기 버튼 눌렸을때
     def click_member(self):
