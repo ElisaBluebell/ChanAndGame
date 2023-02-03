@@ -284,6 +284,7 @@ class MainServer:
     # /get_room_list 명령문
     # DB를 통해 현재 개설된 채팅방의 정보를 정리하여 클라이언트에게 전달
     def get_room_list(self, s):
+        print(1)
         sql = 'SELECT DISTINCT a.port, b.닉네임 FROM chat AS a INNER JOIN state AS b on a.생성자=b.ip;'
         temp = self.execute_db(sql)
         # 반복문을 활용해 유저 정보를 리스트로 만들어서 전송
@@ -317,6 +318,8 @@ class MainServer:
             self.make_chat_room_db(nickname, empty_port)
             # 해당 채팅방 개설과 관련된 작업을 클라이언트에게 지시
             self.send_command('/open_chat_room', empty_port, s)
+            time.sleep(0.2)
+            # self.renew_room_list(s)
 
     # 생성자 IP 정보를 DB에서 받아와서 현재 접속 IP와 대조함, 일치시 1, 일치하는 값 없을 시 0 반환
     def check_have_room(self, user_ip):
@@ -410,10 +413,7 @@ class MainServer:
         same_port_user = self.select_same_port_user(s)
 
         for sock in same_port_user:
-            print(sock)
-            print(self.s_sock)
             self.send_command('/print_chat', data, sock)
-            # time.sleep(0.2)
 
     def get_user_name(self, user):
         sql = f'SELECT 닉네임 FROM state WHERE ip="{user}"'
@@ -427,6 +427,11 @@ class MainServer:
                 print(sock.getsockname())
 
         return same_port_user
+
+    def renew_room_list(self, s):
+        same_port_user = self.select_same_port_user(s)
+        for sock in same_port_user:
+            self.get_room_list(sock)
 
     # 채팅창에서 참가자 및 초대 가능한 사람 보여주기
     def get_member_list(self, state, port, s):
