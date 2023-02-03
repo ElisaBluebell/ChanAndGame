@@ -12,7 +12,7 @@ from socket import *
 from tkinter import messagebox, Tk
 
 qt_ui = uic.loadUiType('main_temp.ui')[0]
-my_ip = '10.10.21.108'
+my_ip = gethostbyname(gethostname())
 
 
 class MainWindow(QWidget, qt_ui):
@@ -181,7 +181,7 @@ class MainWindow(QWidget, qt_ui):
     # 서버로부터 전달받은 채팅방 목록을 채팅방 목록 창에 출력함
     def set_room_list(self, room_list):
         for i in range(len(room_list)):
-            self.room_list.insertItem(i, f'{room_list[i][0]}님의 방')
+            self.room_list.insertItem(i, f'{room_list[i][1]}님의 방')
 
     # /room_exists 명령문
     # 유저가 이미 채팅방을 개설했을 경우 서버로부터 해당 정보를 전달받아 알림창 출력

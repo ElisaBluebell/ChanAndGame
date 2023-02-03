@@ -14,13 +14,13 @@ class MainServer:
         self.sock_list = []
         self.server_list = []
 
+        # 서버 소켓 생성
+        self.s_sock = socket.socket()
         # 데이터 사이즈
         self.BUFFER = 1024
         # 서버 오픈을 위한 포트와 아이피
-        self.ip = '10.10.21.108'
+        self.ip = socket.gethostbyname(socket.gethostname())
         self.port = 9000
-        # 서버 소켓 생성
-        self.s_sock = socket.socket()
 
         # 소켓 설정
         self.initialize_socket()
