@@ -5,9 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="12a35f88-34b3-481c-9af1-3bacfbe34dfa" name="Changes" comment="230203 ElisaBluebell">
-      <change beforePath="$PROJECT_DIR$/.idea/ChanAndGame.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/ChanAndGame.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/chat_client.py" beforeDir="false" afterPath="$PROJECT_DIR$/chat_client.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -53,7 +52,7 @@
     ]
   }
 }</component>
-  <component name="RunManager" selected="Python.new">
+  <component name="RunManager" selected="Python.chat_client">
     <configuration name="chat_client" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="ChanAndGame" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -168,9 +167,9 @@
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.new" />
         <item itemvalue="Python.chat_client" />
         <item itemvalue="Python.chat_server" />
+        <item itemvalue="Python.new" />
         <item itemvalue="Python.jy_chat_client" />
         <item itemvalue="Python.jy_chat_server" />
       </list>
@@ -184,13 +183,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1675049941553</updated>
-    </task>
-    <task id="LOCAL-00020" summary="230131 ElisaBluebell">
-      <created>1675133863711</created>
-      <option name="number" value="00020" />
-      <option name="presentableId" value="LOCAL-00020" />
-      <option name="project" value="LOCAL" />
-      <updated>1675133863711</updated>
     </task>
     <task id="LOCAL-00021" summary="230131 ElisaBluebell">
       <created>1675134118238</created>
@@ -528,7 +520,14 @@
       <option name="project" value="LOCAL" />
       <updated>1675410149253</updated>
     </task>
-    <option name="localTasksCounter" value="69" />
+    <task id="LOCAL-00069" summary="230203 ElisaBluebell">
+      <created>1675410392038</created>
+      <option name="number" value="00069" />
+      <option name="presentableId" value="LOCAL-00069" />
+      <option name="project" value="LOCAL" />
+      <updated>1675410392038</updated>
+    </task>
+    <option name="localTasksCounter" value="70" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -552,9 +551,9 @@
     <MESSAGE value="test" />
     <MESSAGE value="230202 ElisaBluebell" />
     <MESSAGE value="230203 jyw 채팅방 맴버확인" />
-    <MESSAGE value="230203 ElisaBluebell" />
     <MESSAGE value="230203 jyw 채팅방 초대중" />
-    <option name="LAST_COMMIT_MESSAGE" value="230203 jyw 채팅방 초대중" />
+    <MESSAGE value="230203 ElisaBluebell" />
+    <option name="LAST_COMMIT_MESSAGE" value="230203 ElisaBluebell" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

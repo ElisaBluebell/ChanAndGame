@@ -6,13 +6,13 @@ import threading
 import time
 
 from PyQt5 import uic
-from PyQt5.QtWidgets import QApplication, QLabel, QMessageBox, QWidget
+from PyQt5.QtWidgets import QApplication, QLabel, QMessageBox, QWidget, QListWidget
 from select import *
 from socket import *
 from tkinter import messagebox, Tk
 
 qt_ui = uic.loadUiType('main_temp.ui')[0]
-server_ip = '10.10.21.108'
+server_ip = '10.10.21.121'
 
 
 class MainWindow(QWidget, qt_ui):
@@ -308,6 +308,8 @@ class MainWindow(QWidget, qt_ui):
 
     def print_chat(self, content):
         self.chat_list.addItem(content)
+        time.sleep(0.1)
+        self.chat_list.scrollToBottom()
 
     # 채팅창에서 참가자 보기 버튼 눌렸을때
     def click_member(self):
