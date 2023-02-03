@@ -30,10 +30,12 @@ class MainWindow(QWidget, qt_ui):
         self.port = 9000
 
         self.set_nickname.clicked.connect(self.check_nickname)
-        self.nickname_input.returnPressed.connect(self.check_nickname)
         self.make_room.clicked.connect(self.make_chat_room)
         self.room_list.clicked.connect(self.enter_chat_room)
         self.exit.clicked.connect(self.go_main)
+
+        self.nickname_input.returnPressed.connect(self.check_nickname)
+        self.chat.returnPressed.connect(self.send_chat)
 
         self.connect_to_main_server()
 
@@ -252,9 +254,6 @@ class MainWindow(QWidget, qt_ui):
             for i in range(len(content)):
                 self.chat_list.insertItem(row, f'[{content[i][0][11:-3]}]{content[i][1]}{content[i][2]}')
                 row += 1
-
-    def connect_server(self):
-        pass
 
     def invite_user(self):
         pass
