@@ -1,10 +1,10 @@
-import datetime
 import faulthandler
 import json
 import socket
 import sys
 import threading
 import time
+from tkinter.simpledialog import askstring
 
 from PyQt5 import uic
 from PyQt5.QtWidgets import QApplication, QLabel, QMessageBox, QWidget, QListWidget
@@ -31,13 +31,20 @@ class MainWindow(QWidget, qt_ui):
         self.BUFFER = 1024
         self.port = 9000
         self.invitation_preparation = False
+        self.game_state = False
 
         self.set_nickname.clicked.connect(self.check_nickname)
         self.make_room.clicked.connect(self.make_chat_room)
         self.room_list.clicked.connect(self.enter_chat_room_branch)
         self.exit.clicked.connect(self.go_main)
+        # 채팅방 초대 목록을 참여자 목록으로 변경
         self.member.clicked.connect(self.click_member)
+        # 채팅방 참여자 목록을 초대 목록으로 변경
         self.invite.clicked.connect(self.click_invite)
+        # 게임시작 하기
+        self.game_start.clicked.connect(self.start_game)
+        # 스무고개 주제 정하기
+        self.set_subject.returnPressed.connect(self.topic_selection)
 
         self.nickname_input.returnPressed.connect(self.check_nickname)
         self.chat.returnPressed.connect(self.send_chat)
@@ -127,6 +134,18 @@ class MainWindow(QWidget, qt_ui):
 
         elif command == '/show_user_list':
             self.show_user_list
+
+        elif command == '/understaffed':
+            self.understaffed()
+
+        elif command == '/presenter':
+            self.presenter()
+
+        elif command == '/entrant':
+            self.entrant()
+
+        elif command == '/topic':
+            self.subject.setText(content)
 
         else:
             pass
@@ -329,6 +348,18 @@ class MainWindow(QWidget, qt_ui):
                 self.chat_list.insertItem(row, f'[{content[i][0]}]{content[i][1]}{content[i][2]}')
                 row += 1
 
+    # 초대장 알람
+    def invite_user(self, nickname):
+        tk_window = Tk()
+        tk_window.geometry("0x0+3000+6000")
+        reply = messagebox.askquestion('초대장', f'{nickname}님방 에서 초대장이 왔습니다. 입장하시겠습니까?')
+        if reply == 'yes':
+            self.reset_member_button()
+            self.send_command('/request_port', nickname)
+        else:
+            self.send_command('/refuse', '')
+        tk_window.destroy()
+
     def receive_chat(self):
         pass
 
@@ -372,6 +403,7 @@ class MainWindow(QWidget, qt_ui):
             self.show_member(self.port)
             self.member_button()
 
+    # 참여자 보기 버튼 상태 초기화
     def reset_member_button(self):
         self.invitation_preparation = False
         self.member_button()
@@ -380,8 +412,10 @@ class MainWindow(QWidget, qt_ui):
     def member_button(self):
         if self.invitation_preparation:
             self.member.show()
+            self.invite.setText('초대 하기')
         else:
             self.member.hide()
+            self.invite.setText('초대 목록')
 
     # 채팅방 에서 초대가능 , 참가 인원 보여주기
     def show_member(self, port):
@@ -390,14 +424,57 @@ class MainWindow(QWidget, qt_ui):
         else:
             self.send_command('/show_member', [f'{self.invitation_preparation}', port])
 
+    # 초대하기
     def invitation(self, user):
-        self.send_command('/invitation', [user, self.constructor])
+        if not self.game_state:
+            self.send_command('/invitation', [user, self.constructor])
 
+    # 초대 거절 알림
     def refuse(self):
         tk_window = Tk()
         tk_window.geometry("0x0+3000+6000")
         messagebox.showinfo('초대 결과', '거절하였습니다.')
         tk_window.destroy()
+
+    # 게임 시작
+    def start_game(self):
+        self.send_command('/set_game', self.port)
+
+    # 게임 참가 인원 부족 알람
+    def understaffed(self):
+        tk_window = Tk()
+        tk_window.geometry("0x0+3000+6000")
+        messagebox.showinfo('인원 부족', '인원이 부족 합니다.')
+        tk_window.destroy()
+
+    # 주제 및 정답 정하기
+    def topic_selection(self):
+        topic = self.set_subject.text()
+        if topic:
+            self.set_subject.clear()
+            self.subject.setText(topic)
+            tk_window = Tk()
+            tk_window.geometry("0x0+3000+6000")
+            problem = askstring('안내창', '문제를 입력하세요')
+            tk_window.destroy()
+            self.send_command('/topic_selection', [topic, problem])
+
+    # 출제자 선정
+    def presenter(self):
+        self.game_stack.setCurrentIndex(1)
+        self.game_setting()
+
+    # 참가자 선정
+    def entrant(self):
+        self.game_stack.setCurrentIndex(0)
+        self.game_setting()
+
+    # 게임 초기 셋팅
+    def game_setting(self):
+        self.game_state = True
+        self.game_start.hide()
+        self.exit.hide()
+        self.question.hide()
 
 
 if __name__ == '__main__':
