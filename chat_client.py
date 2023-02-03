@@ -265,7 +265,7 @@ class MainWindow(QWidget, qt_ui):
 
         if content is not None:
             for i in range(len(content)):
-                self.chat_list.insertItem(row, f'[{content[i][0][11:-3]}]{content[i][1]}{content[i][2]}')
+                self.chat_list.insertItem(row, f'[{content[i][0]}]{content[i][1]}{content[i][2]}')
                 row += 1
 
     def invite_user(self, port):

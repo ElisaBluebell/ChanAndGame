@@ -372,15 +372,15 @@ class MainServer:
         recent_chat = []
 
         try:
-            sql = f'SELECT * FROM chat WHERE port={chat_port} ORDER BY 시간 LIMIT 19;'
+            sql = f'SELECT * FROM chat WHERE port={chat_port} ORDER BY 시간 LIMIT 10;'
             temp = self.execute_db(sql)
             print(temp)
             # 0=방번호, 1=닉네임, 2시간, 3=채팅내용, 4=생성자, 5=포트 // 시간 닉네임 생성자 순으로 정렬
             for i in range(len(temp)):
                 if temp[i][3] == '님이 채팅방을 생성하였습니다':
-                    recent_chat.append([temp[i][1], temp[i][0], temp[i][2]])
+                    recent_chat.append([temp[i][1][11:-3], temp[i][0], temp[i][2]])
                 else:
-                    recent_chat.append([temp[i][1], temp[i][0], f': {temp[i][2]}'])
+                    recent_chat.append([temp[i][1][11:-3], temp[i][0], f': {temp[i][2]}'])
 
         finally:
             pass
@@ -389,7 +389,7 @@ class MainServer:
 
     def chat_process(self, user, chat, s):
         room_creator = self.seek_room_creator(s)
-        self.insert_chat_in_db(user, chat, room_creator, s)
+        # self.insert_chat_in_db(user, chat, room_creator, s)
         self.fire_the_chat()
 
     def seek_room_creator(self, s):
@@ -407,7 +407,10 @@ class MainServer:
         self.execute_db(sql)
 
     def fire_the_chat(self):
-        print(self.client_list)
+        for sock in self.client_list:
+            pass
+            # print(self.s_sock.getpeername())
+            # print(sock.getpeername())
 
     # 채팅창에서 참가자 및 초대 가능한 사람 보여주기
     def get_member_list(self, state, port, s):
