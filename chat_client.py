@@ -28,8 +28,6 @@ class MainWindow(QWidget, qt_ui):
         self.socks = []
         self.BUFFER = 1024
         self.port = 9000
-        self.invitation_preparation = False
-        self.member.hide()
 
         self.set_nickname.clicked.connect(self.check_nickname)
         self.make_room.clicked.connect(self.make_chat_room)
@@ -111,7 +109,10 @@ class MainWindow(QWidget, qt_ui):
 
         elif command == '/invitation':
             self.invite_user(content)
-            pass
+
+        elif command == '/refuse':
+            self.refuse()
+
         else:
             pass
 
@@ -248,8 +249,9 @@ class MainWindow(QWidget, qt_ui):
         reply = QMessageBox.question(self, '입장 확인', '채팅방에 입장 하시겠습니까?', QMessageBox.Yes | QMessageBox.No,
                                      QMessageBox.No)
         if reply == QMessageBox.Yes:
-            nickname = self.room_list.currentItem().text().split('님의 방')[0]
-            self.send_command('/request_port', nickname)
+            self.reset_member_button()
+            self.constructor = self.room_list.currentItem().text().split('님의 방')[0]
+            self.send_command('/request_port', self.constructor)
 
         else:
             pass
@@ -270,14 +272,16 @@ class MainWindow(QWidget, qt_ui):
                 self.chat_list.insertItem(row, f'[{content[i][0]}]{content[i][1]}{content[i][2]}')
                 row += 1
 
-    def invite_user(self, port):
+    def invite_user(self, nickname):
         tk_window = Tk()
         tk_window.geometry("0x0+3000+6000")
-        reply = messagebox.askquestion('초대장', f'{port}방 에서 초대장이 왔습니다. 입장하시겠습니까?')
+        reply = messagebox.askquestion('초대장', f'{nickname}님방 에서 초대장이 왔습니다. 입장하시겠습니까?')
         if reply == 'yes':
-            print('허락')
+            self.reset_member_button()
+            self.send_command('/request_port', nickname)
         else:
             print('거절')
+            self.send_command('/refuse', '')
         tk_window.destroy()
 
     def receive_chat(self):
@@ -289,8 +293,7 @@ class MainWindow(QWidget, qt_ui):
         self.chat.clear()
 
     def go_main(self):
-        self.invitation_preparation = False
-        self.member_button()
+        self.reset_member_button()
         self.Client.setCurrentIndex(0)
         self.connect_to_main()
         self.chat.clear()
@@ -319,13 +322,18 @@ class MainWindow(QWidget, qt_ui):
             self.show_member(self.port)
             self.member_button()
 
+    def reset_member_button(self):
+        self.invitation_preparation = False
+        self.member_button()
+
+    # 버튼 숨기고 나타나게하기
     def member_button(self):
         if self.invitation_preparation:
             self.member.show()
         else:
             self.member.hide()
 
-    # 하는중
+    # 채팅방 에서 초대가능 , 참가 인원 보여주기
     def show_member(self, port):
         if not self.invitation_preparation:
             self.send_command('/show_member', [f'{self.invitation_preparation}', port])
@@ -333,7 +341,13 @@ class MainWindow(QWidget, qt_ui):
             self.send_command('/show_member', [f'{self.invitation_preparation}', port])
 
     def invitation(self, user):
-        self.send_command('/invitation', [user, self.port])
+        self.send_command('/invitation', [user, self.constructor])
+
+    def refuse(self):
+        tk_window = Tk()
+        tk_window.geometry("0x0+3000+6000")
+        messagebox.showinfo('초대 결과', '거절하였습니다.')
+        tk_window.destroy()
 
 
 if __name__ == '__main__':
