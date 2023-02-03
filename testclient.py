@@ -36,6 +36,7 @@ class WindowClass(QMainWindow, form_class[0]):
         cth = Thread(target=self.reception, args=(self.c,), daemon=True)
         cth.start()
 
+    # 서버 신호 수신
     def reception(self, c):
         while True:
             try:
@@ -83,30 +84,40 @@ class WindowClass(QMainWindow, form_class[0]):
                 print('접속 종료')
                 break
 
+    # 방이동 신호 전송
     def room_move(self):
         room = self.room_list.currentItem().text()
         msg = json.dumps(['방이동', room[0]])
         self.c.sendall(msg.encode())
 
+    # 방이동시 새로운 포트 부여
     def new_port(self, new_ip, new_port):
-        self.c = socket(AF_INET, SOCK_STREAM)
-        self.c.connect((new_ip, new_port))
-        cth = Thread(target=self.sub_reception, args=(self.c,), daemon=True)
-        cth.start()
+        if new_port == 9000:
+            self.c.close()
+            self.c = socket(AF_INET, SOCK_STREAM)
+            self.c.connect((new_ip, new_port))
+            cth = Thread(target=self.reception, args=(self.c,), daemon=True)
+            cth.start()
+        else:
+            self.c.close()
+            self.c = socket(AF_INET, SOCK_STREAM)
+            self.c.connect((new_ip, new_port))
+            cth = Thread(target=self.sub_reception, args=(self.c,), daemon=True)
+            cth.start()
 
-
-    # 방만들기
+    # 방만들기 신호 전송
     def roommake(self):
         msg = json.dumps(['방만들기'])
         self.c.sendall(msg.encode())
 
-    # 닉네임 설정 하기
+    # 닉네임 설정 하기 신호 전송
     def nickmake(self):
         nick = self.nickname_input.text()
         if nick:
             msg = json.dumps(['닉네임', nick])
             self.c.sendall(msg.encode())
 
+    # 채팅방 이동시 새로운 수신 스레드 부여
     def sub_reception(self, c):
         self.invitation_preparation = False
         while True:
@@ -130,20 +141,24 @@ class WindowClass(QMainWindow, form_class[0]):
             elif r_msg[0] == '초대':
                 pass
 
+    # 초대하기
     def invitation(self):
         if self.invitation_preparation:
             invite = self.member_list.currentItem().text()
             msg = json.dumps(['초대', invite])
             self.c.sendall(msg.encode())
 
+    # 채팅방 인원 보여주기
     def show_member(self):
         msg = json.dumps(['목록'])
         self.c.sendall(msg.encode())
 
+    # 초대가능 인원 보여주기
     def show_guest(self):
         msg = json.dumps(['초대목록'])
         self.c.sendall(msg.encode())
 
+    # 신호 끊기
     def closeEvent(self, e):
         msg = json.dumps(['나감'])
         self.c.sendall(msg.encode())
