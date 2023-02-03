@@ -6,7 +6,7 @@ import threading
 import time
 
 from PyQt5 import uic
-from PyQt5.QtWidgets import QApplication, QLabel, QMessageBox, QWidget
+from PyQt5.QtWidgets import QApplication, QLabel, QMessageBox, QWidget, QListWidget
 from select import *
 from socket import *
 from tkinter import messagebox, Tk
@@ -113,6 +113,9 @@ class MainWindow(QWidget, qt_ui):
 
         elif command == '/invitation':
             self.invite_user(content)
+
+        elif command == '/print_chat':
+            self.print_chat(content)
 
     # /setup_nickname 명령문
     # 서버에 닉네임 설정 프로세스를 요청을 보내고 닉네임 입력창을 클리어
@@ -293,6 +296,9 @@ class MainWindow(QWidget, qt_ui):
         self.reinitialize_socket()
         self.port = 9000
         self.sock.connect((my_ip, self.port))
+
+    def print_chat(self, content):
+        self.chat_list.addItem(content)
 
     # 채팅창에서 참가자보기 버튼 눌렸을때
     def click_member(self):

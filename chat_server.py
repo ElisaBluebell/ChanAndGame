@@ -3,6 +3,7 @@ import json
 import pymysql
 import socket
 import select
+import time
 
 
 class MainServer:
@@ -12,6 +13,7 @@ class MainServer:
     def __init__(self):
         # 소켓 리스트
         self.client_list = []
+        self.chat_list = []
         self.server_list = []
 
         # 서버 소켓 생성
@@ -100,6 +102,7 @@ class MainServer:
     def set_client(self, c_sock, addr, s):
         # 클라이언트 소켓을 소켓 리스트에 추가함
         self.client_list.append(c_sock)
+        self.chat_list.append(c_sock)
         # 해당 주소의 접속을 콘솔에 출력
         print(f'Client{addr} connected')
         # 클라이언트의 초기 설정 요청
@@ -141,6 +144,7 @@ class MainServer:
         s.close()
         # 소켓 리스트에서 삭제
         self.client_list.remove(s)
+        self.chat_list.remove(s)
 
     # 접속 종료한 유저의 IP를 매개로 포트 번호 초기화
     def set_user_status_logout(self, ip):
@@ -389,7 +393,7 @@ class MainServer:
     def chat_process(self, user, chat, s):
         room_creator = self.seek_room_creator(s)
         # self.insert_chat_in_db(user, chat, room_creator, s)
-        self.fire_the_chat()
+        self.fire_the_chat(user, chat, s)
 
     def seek_room_creator(self, s):
         sql = f'SELECT 생성자 FROM chat WHERE port={s.getsockname()[1]}'
@@ -405,11 +409,29 @@ class MainServer:
         )'''
         self.execute_db(sql)
 
-    def fire_the_chat(self):
-        for sock in self.client_list:
-            pass
-            # print(self.s_sock.getpeername())
-            # print(sock.getpeername())
+    def fire_the_chat(self, user, chat, s):
+        user = self.get_user_name(user)
+        data = f'[{str(datetime.datetime.now())[11:-10]}]{user}: {chat}'
+        same_port_user = self.select_same_port_user(s)
+
+        for sock in same_port_user:
+            print(sock)
+            print(self.s_sock)
+            self.send_command('/print_chat', data, sock)
+            # time.sleep(0.2)
+
+    def get_user_name(self, user):
+        sql = f'SELECT 닉네임 FROM state WHERE ip="{user}"'
+        return self.execute_db(sql)[0][0]
+
+    def select_same_port_user(self, s):
+        same_port_user = []
+        for sock in self.chat_list:
+            if sock.getsockname()[1] == s.getsockname()[1]:
+                same_port_user.append(sock)
+                print(sock.getsockname())
+
+        return same_port_user
 
     # 채팅창에서 참가자 및 초대 가능한 사람 보여주기
     def get_member_list(self, state, port, s):
