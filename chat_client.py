@@ -283,17 +283,6 @@ class MainWindow(QWidget, qt_ui):
                 self.chat_list.insertItem(row, f'[{content[i][0]}]{content[i][1]}{content[i][2]}')
                 row += 1
 
-    def invite_user(self, nickname):
-        tk_window = Tk()
-        tk_window.geometry("0x0+3000+6000")
-        reply = messagebox.askquestion('초대장', f'{nickname}님방 에서 초대장이 왔습니다. 입장하시겠습니까?')
-        if reply == 'yes':
-            self.reset_member_button()
-            self.send_command('/request_port', nickname)
-        else:
-            self.send_command('/refuse', '')
-        tk_window.destroy()
-
     def receive_chat(self):
         pass
 
@@ -318,6 +307,17 @@ class MainWindow(QWidget, qt_ui):
         self.chat_list.addItem(content)
         time.sleep(0.1)
         self.chat_list.scrollToBottom()
+
+    def invite_user(self, nickname):
+        tk_window = Tk()
+        tk_window.geometry("0x0+3000+6000")
+        reply = messagebox.askquestion('초대장', f'{nickname}님방 에서 초대장이 왔습니다. 입장하시겠습니까?')
+        if reply == 'yes':
+            self.reset_member_button()
+            self.send_command('/request_port', nickname)
+        else:
+            self.send_command('/refuse', '')
+        tk_window.destroy()
 
     # 채팅창에서 참가자 보기 버튼 눌렸을때
     def click_member(self):
