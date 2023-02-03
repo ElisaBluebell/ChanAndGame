@@ -207,11 +207,6 @@ class MainServer:
             self.get_member_list(content[0], content[1], s)
 
         elif command == '/invitation':
-            for s in self.server_list:
-                # 접속받은 소켓과 주소 설정
-                c_sock, addr = s.accept()
-                print(c_sock)
-                print(addr)
             pass
 
     # /setup_nickname 명령문

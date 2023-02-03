@@ -296,9 +296,11 @@ class MainWindow(QWidget, qt_ui):
     # 채팅창에서 초대하기 버튼 눌렸을때 대기창 인원 보여주기 및 초대하기
     def click_invite(self):
         if self.invitation_preparation:
-            member = self.member_list.currentItem().text()
-            if member:
+            try:
+                member = self.member_list.currentItem().text()
                 self.invitation(member)
+            except:
+                pass
         else:
             self.invitation_preparation = True
             self.show_member(self.port)
