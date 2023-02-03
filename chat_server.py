@@ -179,7 +179,6 @@ class MainServer:
         # 명령문과 컨텐츠 구분
         command = message[0]
         content = message[1]
-        print(f'command: {command}, content: {content}')
 
         # 이하 각 커맨드에 해당하는 명령 실행
         if command == '/setup_nickname':
@@ -377,7 +376,6 @@ class MainServer:
             temp = self.execute_db(sql)
             # 0=방번호, 1=닉네임, 2시간, 3=채팅내용, 4=생성자, 5=포트 // 시간 닉네임 생성자 순으로 정렬
             for i in range(len(temp)):
-                print(temp)
                 if temp[i][3] == '님이 채팅방을 생성하였습니다':
                     recent_chat.append([temp[i][1], temp[i][0], temp[i][2]])
                 else:
@@ -408,7 +406,7 @@ class MainServer:
         self.execute_db(sql)
 
     def fire_the_chat(self):
-        pass
+        print(self.client_list)
 
     # 채팅창에서 참가자 및 초대 가능한 사람 보여주기
     def get_member_list(self, state, port, s):
