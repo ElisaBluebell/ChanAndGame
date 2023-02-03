@@ -1,6 +1,5 @@
 import faulthandler
 import json
-import pymysql
 import socket
 import sys
 import threading
@@ -13,7 +12,7 @@ from socket import *
 from tkinter import messagebox, Tk
 
 qt_ui = uic.loadUiType('main_temp.ui')[0]
-my_ip = '10.10.21.108'
+my_ip = '10.10.21.121'
 
 
 class MainWindow(QWidget, qt_ui):
@@ -210,7 +209,7 @@ class MainWindow(QWidget, qt_ui):
         self.port = port
         self.connect_to_chat_room()
         self.move_to_chat_room()
-        self.show_member(port)
+        # self.show_member(port)
 
     # 서버와 연결된 소켓 정보를 초기화한 뒤 서버로부터 전달받은 채팅방 포트로 재연결
     def connect_to_chat_room(self):
@@ -278,33 +277,20 @@ class MainWindow(QWidget, qt_ui):
         pass
 
     def send_chat(self):
-        pass
+        chat_content = self.chat.text()
+        print(chat_content)
+        self.chat.clear()
 
     def go_main(self):
-        self.connect_to_main()
         self.Client.setCurrentIndex(0)
+        self.connect_to_main()
+        self.chat.clear()
         self.invitation_preparation = False
 
     def connect_to_main(self):
         self.reinitialize_socket()
-        self.sock.connect((my_ip, 9000))
-
-
-# DB 작업
-def execute_db(sql):
-    conn = pymysql.connect(user='elisa', password='0000', host='10.10.21.108', port=3306, database='chatandgame')
-    c = conn.cursor()
-
-    # 인수로 받아온 쿼리문에 해당하는 작업 수행
-    c.execute(sql)
-    # 커밋
-    conn.commit()
-
-    c.close()
-    conn.close()
-
-    # 결과 반환
-    return c.fetchall()
+        self.port = 9000
+        self.sock.connect((my_ip, self.port))
 
 
 if __name__ == '__main__':

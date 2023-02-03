@@ -177,6 +177,13 @@
       <option name="presentableId" value="Default" />
       <updated>1675049941553</updated>
     </task>
+    <task id="LOCAL-00011" summary="230130 ElisaBluebell">
+      <created>1675128756601</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1675128756601</updated>
+    </task>
     <task id="LOCAL-00012" summary="230131 ElisaBluebell">
       <created>1675128816414</created>
       <option name="number" value="00012" />
@@ -513,14 +520,7 @@
       <option name="project" value="LOCAL" />
       <updated>1675393119569</updated>
     </task>
-    <task id="LOCAL-00060" summary="230203 jyw 하는중">
-      <created>1675393994316</created>
-      <option name="number" value="00060" />
-      <option name="presentableId" value="LOCAL-00060" />
-      <option name="project" value="LOCAL" />
-      <updated>1675393994316</updated>
-    </task>
-    <option name="localTasksCounter" value="61" />
+    <option name="localTasksCounter" value="60" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -544,8 +544,7 @@
     <MESSAGE value="test" />
     <MESSAGE value="230202 ElisaBluebell" />
     <MESSAGE value="230203 ElisaBluebell" />
-    <MESSAGE value="230203 jyw 하는중" />
-    <option name="LAST_COMMIT_MESSAGE" value="230203 jyw 하는중" />
+    <option name="LAST_COMMIT_MESSAGE" value="230203 ElisaBluebell" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
