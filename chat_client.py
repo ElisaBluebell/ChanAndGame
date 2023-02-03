@@ -7,7 +7,7 @@ import threading
 import time
 
 from PyQt5 import uic
-from PyQt5.QtWidgets import QApplication, QLabel, QMessageBox, QWidget
+from PyQt5.QtWidgets import QApplication, QLabel, QMessageBox, QWidget, QStackedWidget
 from select import *
 from socket import *
 from tkinter import messagebox, Tk
@@ -27,7 +27,7 @@ class MainWindow(QWidget, qt_ui):
         self.sock = socket()
         self.socks = []
         self.BUFFER = 1024
-        self.chat_port = 0
+        self.port = 9000
 
         self.set_nickname.clicked.connect(self.check_nickname)
         self.nickname_input.returnPressed.connect(self.check_nickname)
@@ -42,7 +42,7 @@ class MainWindow(QWidget, qt_ui):
         self.sock.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
 
         self.socks.append(self.sock)
-        self.sock.connect(('10.10.21.121', 9000))
+        self.sock.connect(('10.10.21.121', self.port))
         self.thread_switch = 1
 
         get_message = threading.Thread(target=self.get_message, daemon=True)
@@ -73,14 +73,20 @@ class MainWindow(QWidget, qt_ui):
         if command == '/setup_nickname':
             self.setup_nickname()
 
-        elif command == '/set_nickname_complete' or command == '/set_nickname_label':
+        elif command == '/set_nickname_complete':
             self.show_nickname(content)
 
         elif command == '/nickname_exists':
             self.nickname_exists()
 
         elif command == '/set_user_list':
-            self.set_user_list(content)
+            if self.Client.currentIndex() == 0:
+                self.set_user_list(self.accessor_list, content)
+                self.show_room_list()
+            else:
+                self.set_user_list(self.member_list, content)
+                print(self.member_list)
+                print(content)
 
         elif command == '/set_room_list':
             self.set_room_list(content)
@@ -120,7 +126,8 @@ class MainWindow(QWidget, qt_ui):
     def show_user_list(self):
         # 기존 접속자 리스트 초기화
         self.accessor_list.clear()
-        self.send_command('/get_main_user_list', '')
+        self.member_list.clear()
+        self.send_command('/show_user', self.port)
 
     # 닉네임 입력 체크
     def check_nickname(self):
@@ -150,11 +157,9 @@ class MainWindow(QWidget, qt_ui):
 
     # /set_user_list 명령문
     # 서버로부터 전달받은 유저 목록을 유저 목록 창에 출력하고 서버에 채팅방 목록을 요청함
-    def set_user_list(self, login_user_list):
+    def set_user_list(self, target, login_user_list):
         for i in range(len(login_user_list)):
-            self.accessor_list.insertItem(i, login_user_list[i])
-
-        self.show_room_list()
+            target.insertItem(i, login_user_list[i])
 
     # 채팅방 목록을 초기화하고 서버에 채팅방 목록을 요청하는 명령문 전송
     def show_room_list(self):
@@ -193,14 +198,14 @@ class MainWindow(QWidget, qt_ui):
     # /open_chat_room 명령문
     # 소켓 커넥션을 채팅방으로 변경하고 채팅방 페이지를 출력
     def open_chat_room(self, port):
-        self.chat_port = port
+        self.port = port
         self.connect_to_chat_room()
         self.move_to_chat_room()
 
     # 서버와 연결된 소켓 정보를 초기화한 뒤 서버로부터 전달받은 채팅방 포트로 재연결
     def connect_to_chat_room(self):
         self.reinitialize_socket()
-        self.sock.connect(('10.10.21.121', self.chat_port))
+        self.sock.connect(('10.10.21.121', self.port))
 
     def reinitialize_socket(self):
         self.thread_switch = 0
@@ -237,9 +242,9 @@ class MainWindow(QWidget, qt_ui):
     def setup_chatroom(self):
         # 채팅창 클리어
         self.chat_list.clear()
-        self.send_command('/show_user', '')
+        self.send_command('/show_user', self.port)
         time.sleep(0.2)
-        self.send_command('/load_chat', self.chat_port)
+        self.send_command('/load_chat', self.port)
 
     def load_recent_chat(self, content):
         row = 1
@@ -248,9 +253,6 @@ class MainWindow(QWidget, qt_ui):
             for i in range(len(content)):
                 self.chat_list.insertItem(row, f'[{content[i][0][11:-3]}]{content[i][1]}{content[i][2]}')
                 row += 1
-
-    def show_user(self):
-        pass
 
     def connect_server(self):
         pass

@@ -128,8 +128,8 @@ class MainServer:
         except IndexError:
             nickname = ''
 
-        # 정상적으로 등록된 닉네임이 있을 경우 닉네임 변경을 요청함
-        self.send_command('/set_nickname_label', nickname, c_sock)
+        # 정상적으로 등록된 닉네임이 있을 경우 닉네임 설정 완료 전송
+        self.send_command('/set_nickname_complete', nickname, c_sock)
 
     # 연결 소실시 행해지는 작업
     def connection_lost(self, s):
@@ -188,8 +188,8 @@ class MainServer:
         elif command == '/check_nickname_exist':
             self.check_nickname_exist(content, s)
 
-        elif command == '/get_main_user_list':
-            self.get_main_user_list(s)
+        elif command == '/show_user':
+            self.show_user(content, s)
 
         elif command == '/get_room_list':
             self.get_room_list(s)
@@ -202,9 +202,6 @@ class MainServer:
 
         elif command == '/load_chat':
             self.load_chat(content, s)
-
-        elif command == '/show_user':
-            pass
 
     # /setup_nickname 명령문
     def setup_nickname(self, user_ip, nickname, s):
@@ -249,22 +246,33 @@ class MainServer:
 
     # /get_main_user_list 명령문
     # DB를 통해 현재 메인 페이지 접속중인 유저 정보를 불러와 클라이언트에게 전달
-    def get_main_user_list(self, s):
-        sql = 'SELECT 닉네임 FROM state WHERE port=9000;'
+    # def get_main_user_list(self, s):
+    #     login_user_list = self.get_single_item_list('닉네임', 'state', 'port', 9000)
+    #     login_user_list = self.array_list(login_user_list)
+    #     self.send_command('/set_user_list', login_user_list, s)
+
+    def get_single_item_list(self, item, table, key_column, key):
+        sql = f'SELECT {item} FROM {table} WHERE {key_column}={key};'
         temp = self.execute_db(sql)
-        # 데이터 전송을 위해 유저 정보를 리스트로 정리
-        login_user_list = self.array_user_list(temp)
-        self.send_command('/set_user_list', login_user_list, s)
+        return temp
+
+    # /show_user 명령문
+    # DB에서 해당 채팅방에 접속한 유저 리스트를 불러와 클라이언트에 유저 리스트 출력 명령과 함께 전송
+    def show_user(self, port, s):
+        chat_user_list = self.get_single_item_list('닉네임', 'state', 'port', port)
+        chat_user_list = self.array_list(chat_user_list)
+        self.send_command('/set_user_list', chat_user_list, s)
+
 
     # 반복문을 활용해 인수로 받은 유저 정보를 리스트로 만들어 반환
     @staticmethod
-    def array_user_list(temp):
-        login_user_list = []
+    def array_list(temp):
+        temp_list = []
 
         for i in range(len(temp)):
-            login_user_list.append(temp[i][0])
+            temp_list.append(temp[i][0])
 
-        return login_user_list
+        return temp_list
 
     # /get_room_list 명령문
     # DB를 통해 현재 개설된 채팅방의 정보를 정리하여 클라이언트에게 전달
@@ -370,6 +378,7 @@ class MainServer:
             pass
 
         self.send_command('/load_recent_chat', recent_chat, s)
+
 
 
 # 돌아라 돌아 ~.~
