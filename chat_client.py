@@ -249,13 +249,6 @@ class MainWindow(QWidget, qt_ui):
                 self.chat_list.insertItem(row, f'[{content[i][0][11:-3]}]{content[i][1]}{content[i][2]}')
                 row += 1
 
-    def room_create_info(self):
-        pass
-        # # 통신 미적용으로 인해 임의로 9001번 포트 줌
-        # sql = 'SELECT * FROM chat WHERE port=9001 LIMIT 1;'
-        # chat_log = execute_db(sql)
-        # self.chat_list.insertItem(0, f'[{chat_log[0][2][:-3]}]{chat_log[0][1]}{chat_log[0][3]}')
-
     def show_user(self):
         pass
 
