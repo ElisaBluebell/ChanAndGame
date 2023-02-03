@@ -110,7 +110,9 @@ class MainWindow(QWidget, qt_ui):
             self.load_recent_chat(content)
 
         elif command == '/invitation':
-            # self.invite_user(content)
+            self.invite_user(content)
+            pass
+        else:
             pass
 
     # /setup_nickname 명령문
@@ -271,7 +273,11 @@ class MainWindow(QWidget, qt_ui):
     def invite_user(self, port):
         tk_window = Tk()
         tk_window.geometry("0x0+3000+6000")
-        messagebox.showinfo('초대', f'{port}방 에서 초대장이 왔습니다.')
+        reply = messagebox.askquestion('초대장', f'{port}방 에서 초대장이 왔습니다. 입장하시겠습니까?')
+        if reply == 'yes':
+            print('허락')
+        else:
+            print('거절')
         tk_window.destroy()
 
     def receive_chat(self):
@@ -283,21 +289,22 @@ class MainWindow(QWidget, qt_ui):
         self.chat.clear()
 
     def go_main(self):
+        self.invitation_preparation = False
+        self.member_button()
         self.Client.setCurrentIndex(0)
         self.connect_to_main()
         self.chat.clear()
-        self.invitation_preparation = False
 
     def connect_to_main(self):
         self.reinitialize_socket()
         self.port = 9000
         self.sock.connect((server_ip, self.port))
 
-    # 채팅창에서 참가자보기 버튼 눌렸을때
+    # 채팅창에서 참가자 보기 버튼 눌렸을때
     def click_member(self):
         self.invitation_preparation = False
         self.show_member(self.port)
-        self.member.hide()
+        self.member_button()
 
     # 채팅창에서 초대하기 버튼 눌렸을때 대기창 인원 보여주기 및 초대하기
     def click_invite(self):
@@ -310,7 +317,13 @@ class MainWindow(QWidget, qt_ui):
         else:
             self.invitation_preparation = True
             self.show_member(self.port)
+            self.member_button()
+
+    def member_button(self):
+        if self.invitation_preparation:
             self.member.show()
+        else:
+            self.member.hide()
 
     # 하는중
     def show_member(self, port):

@@ -205,20 +205,21 @@ class MainServer:
         elif command == '/show_member':
             self.get_member_list(content[0], content[1], s)
 
-        # elif command == '/invitation':
-        #     name = content[0]
-        #     port = content[1]
-        #     sql = f"select ip from state where 닉네임 ='{name}';"
-        #     invite_ip = self.execute_db(sql)[0][0]
-        #     for i in self.client_list:
-        #         try:
-        #             if invite_ip in i.getpeername():
-        #                 self.send_command('/invitation', port, i)
-        #         except:
-        #             self.send_command('/invitation_failed', '', s)
-        #
-        # elif command == '/chat':
-        #     self.chat_process(user_ip, content, s)
+        elif command == '/invitation':
+            name = content[0]
+            port = content[1]
+            # sql = f"select ip from state where 닉네임 ='{name}';"
+            # invite_ip = self.execute_db(sql)[0][0]
+            invite_ip = '10.10.21.108'
+            for i in self.client_list:
+                try:
+                    if invite_ip in i.getpeername():
+                        self.send_command('/invitation', port, i)
+                except:
+                    continue
+
+        elif command == '/chat':
+            self.chat_process(user_ip, content, s)
 
     # /setup_nickname 명령문
     def setup_nickname(self, user_ip, nickname, s):
