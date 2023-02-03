@@ -6,7 +6,7 @@ import threading
 import time
 
 from PyQt5 import uic
-from PyQt5.QtWidgets import QApplication, QLabel, QMessageBox, QWidget, QStackedWidget
+from PyQt5.QtWidgets import QApplication, QLabel, QMessageBox, QWidget
 from select import *
 from socket import *
 from tkinter import messagebox, Tk
