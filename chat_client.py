@@ -238,7 +238,7 @@ class MainWindow(QWidget, qt_ui):
         # 채팅창 클리어
         self.chat_list.clear()
         self.send_command('/show_user', '')
-        time.sleep(0.1)
+        time.sleep(0.2)
         self.send_command('/load_chat', self.chat_port)
 
     def load_recent_chat(self, content):
