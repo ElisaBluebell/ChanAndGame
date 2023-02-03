@@ -92,15 +92,17 @@ class MainServer:
                         # 유언을 받은 경우
                         if not data:
                             # 시체를 안고 커넥션 로스트 함수로
-                            self.connection_lost(s)
+                            self.connection_lost(s, c_sock)
                             continue
 
                     except ConnectionResetError:
-                        self.connection_lost(s)
+                        self.connection_lost(s, c_sock)
                         continue
 
     # 클라이언트 소켓 접속시 행해지는 기본설정들
     def set_client(self, c_sock, addr, s):
+        self.renew_user_list(s)
+        time.sleep(0.5)
         # 클라이언트 소켓을 소켓 리스트에 추가함
         self.client_list.append(c_sock)
         self.chat_list.append(c_sock)
@@ -136,16 +138,20 @@ class MainServer:
         self.send_command('/set_nickname_complete', nickname, c_sock)
 
     # 연결 소실시 행해지는 작업
-    def connection_lost(self, s):
+    def connection_lost(self, s, c_sock):
         # DB상 유저 상태 변경 함수 실행
         self.set_user_status_logout(s.getpeername()[0])
         # 커넥션 로스트 상태 확인을 위한 출력
         print(f'클라이언트 {s.getpeername()} 접속 종료')
+
         # 해당 커넥션 소켓 닫음
         s.close()
         # 소켓 리스트에서 삭제
         self.client_list.remove(s)
         self.chat_list.remove(s)
+
+        time.sleep(0.5)
+        self.renew_user_list(c_sock)
 
     # 접속 종료한 유저의 IP를 매개로 포트 번호 초기화
     def set_user_status_logout(self, ip):
@@ -226,6 +232,12 @@ class MainServer:
 
         elif command == '/renew_room_list':
             self.renew_room_list(s)
+
+        elif command == 'renew_user_list':
+            self.renew_user_list(s)
+
+        else:
+            pass
 
     # /setup_nickname 명령문
     def setup_nickname(self, user_ip, nickname, s):
@@ -436,6 +448,12 @@ class MainServer:
         same_port_user = self.select_same_port_user(s)
         for sock in same_port_user:
             self.get_room_list(sock)
+
+    def renew_user_list(self, s):
+        same_port_user = self.select_same_port_user(s)
+        for sock in same_port_user:
+            self.send_command('/show_user_list', '', sock)
+
 
     # 채팅창에서 참가자 및 초대 가능한 사람 보여주기
     def get_member_list(self, state, port, s):

@@ -54,6 +54,8 @@ class MainWindow(QWidget, qt_ui):
         get_message = threading.Thread(target=self.get_message, daemon=True)
         get_message.start()
 
+        # self.send_command()
+
     # 수신한 메시지를 원래 형태로 복원하여 명령 부분으로 전송
     def get_message(self):
         while True:
@@ -116,6 +118,9 @@ class MainWindow(QWidget, qt_ui):
         elif command == '/refuse':
             self.refuse()
 
+        elif command == '/show_user_list':
+            self.show_user_list
+
         else:
             pass
 
@@ -145,7 +150,7 @@ class MainWindow(QWidget, qt_ui):
     def show_user_list(self):
         # 기존 접속자 리스트 초기화
         self.accessor_list.clear()
-        self.member_list.clear()
+        # self.member_list.clear()
         self.send_command('/show_user', self.port)
 
     # 닉네임 입력 체크
