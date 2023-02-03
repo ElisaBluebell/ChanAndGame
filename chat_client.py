@@ -1,3 +1,4 @@
+import datetime
 import faulthandler
 import json
 import socket
@@ -28,6 +29,7 @@ class MainWindow(QWidget, qt_ui):
         self.socks = []
         self.BUFFER = 1024
         self.port = 9000
+        self.invitation_preparation = False
 
         self.set_nickname.clicked.connect(self.check_nickname)
         self.make_room.clicked.connect(self.make_chat_room)
@@ -56,16 +58,17 @@ class MainWindow(QWidget, qt_ui):
     def get_message(self):
         while True:
             if self.thread_switch == 1:
-                r_sock, dummy1, dummy2 = select(self.socks, [], [], 0)
+                r_sock, dummy1, dummy2 = select(self.socks, [], [], 2)
                 if r_sock:
                     for s in r_sock:
                         if s == self.sock:
                             message = eval(self.sock.recv(self.BUFFER).decode())
-                            print(f'받은 메시지: {message}')
+                            print(f'받은 메시지: {message} [{datetime.datetime.now()}]')
                             self.command_processor(message[0], message[1])
 
     def send_command(self, command, content):
         data = json.dumps([command, content])
+        print(f'보낸 메시지: {data} [{datetime.datetime.now()}]')
         self.sock.send(data.encode())
 
     # 초기 설정 종료
@@ -91,9 +94,6 @@ class MainWindow(QWidget, qt_ui):
                 self.set_user_list(self.member_list, content)
             elif not self.invitation_preparation:
                 self.set_user_list(self.member_list, content)
-            # else:
-            #     self.set_user_list(self.member_list, content)
-            #     print(self.member_list)
 
         elif command == '/set_room_list':
             self.set_room_list(content)
@@ -189,6 +189,7 @@ class MainWindow(QWidget, qt_ui):
     # /set_room_list 명령문
     # 서버로부터 전달받은 채팅방 목록을 채팅방 목록 창에 출력함
     def set_room_list(self, room_list):
+        self.room_list.clear()
         for i in range(len(room_list)):
             self.room_list.insertItem(i, f'{room_list[i][1]}님의 방')
 
@@ -207,7 +208,7 @@ class MainWindow(QWidget, qt_ui):
         if not self.no_nickname():
             self.send_command('/make_chat_room', f'{self.nickname.text()}')
 
-    # 닉네임 설정 여부를 판별하여 닉네임이 설정되지 않은 상태에서 채팅방 개설 시도시 생성 요청 알림창 출력 
+    # 닉네임 설정 여부를 판별하여 닉네임이 설정되지 않은 상태에서 채팅방 개설 시도시 생성 요청 알림창 출력
     def no_nickname(self):
         if self.nickname.text() == '닉네임을 설정해주세요.':
             QMessageBox.warning(self, '닉네임 설정', '닉네임 설정이 필요합니다.')
@@ -219,6 +220,8 @@ class MainWindow(QWidget, qt_ui):
     # 소켓 커넥션을 채팅방으로 변경하고 채팅방 페이지를 출력
     def open_chat_room(self, port):
         self.port = port
+        self.send_command('/renew_room_list', '')
+        time.sleep(0.5)
         self.connect_to_chat_room()
         self.move_to_chat_room()
 
@@ -232,14 +235,14 @@ class MainWindow(QWidget, qt_ui):
         # 소켓 리스트에서 소켓 제거 후 소켓 닫음
         self.socks.remove(self.sock)
         self.sock.close()
-        
+
         # 소켓 재정의 및 리스트에 추가
         self.sock = socket()
         self.sock.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
         self.socks.append(self.sock)
 
         self.thread_switch = 1
-        
+
     # 환영 문구를 제거하고 위젯의 스택을 채팅방으로 옮김
     def move_to_chat_room(self):
         self.welcome.setText('')
@@ -264,7 +267,7 @@ class MainWindow(QWidget, qt_ui):
         # 채팅창 클리어
         self.chat_list.clear()
         self.send_command('/show_user', self.port)
-        time.sleep(0.3)
+        time.sleep(0.5)
         self.send_command('/load_chat', self.port)
 
     def load_recent_chat(self, content):

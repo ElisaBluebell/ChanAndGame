@@ -15,6 +15,7 @@ class MainServer:
         self.client_list = []
         self.chat_list = []
         self.server_list = []
+        self.past_message = []
 
         # 서버 소켓 생성
         self.s_sock = socket.socket()
@@ -44,7 +45,7 @@ class MainServer:
         # 채팅 소켓 초기 설정 함수 호출
         self.initialize_chat_socket()
         # 포트 번호를 알림
-        print(f'Waiting Connections on Port {self.port}...')
+        print(f'접속 대기중 {self.port}...')
 
     # 채팅 소켓 설정 함수
     def initialize_chat_socket(self):
@@ -66,7 +67,7 @@ class MainServer:
     def receive_command(self):
         while True:
             # 읽기, 쓰기, 오류 소켓 리스트를 넌블로킹 모드로 선언
-            r_sock, w_sock, e_sock = select.select(self.client_list, [], [], 0)
+            r_sock, w_sock, e_sock = select.select(self.client_list, [], [], 2)
             for s in r_sock:
                 if s in self.server_list:
                     # 접속받은 소켓과 주소 설정
@@ -79,7 +80,7 @@ class MainServer:
                         # 받아온 바이트 데이터를 디코딩
                         data = s.recv(self.BUFFER).decode()
                         # 송신자와 데이터 확인을 위해 콘솔창 출력
-                        print(f'Received: {s.getpeername()}: {data}')
+                        print(f'받은 메시지> {s.getpeername()}: {data} [{datetime.datetime.now()}]')
 
                         # 실제 데이터를 수신한 경우
                         if data:
@@ -104,7 +105,7 @@ class MainServer:
         self.client_list.append(c_sock)
         self.chat_list.append(c_sock)
         # 해당 주소의 접속을 콘솔에 출력
-        print(f'Client{addr} connected')
+        print(f'클라이언트 {addr} 접속')
         # 클라이언트의 초기 설정 요청
         self.set_client_default(c_sock, addr[0], s.getsockname()[1])
 
@@ -139,7 +140,7 @@ class MainServer:
         # DB상 유저 상태 변경 함수 실행
         self.set_user_status_logout(s.getpeername()[0])
         # 커넥션 로스트 상태 확인을 위한 출력
-        print(f'Client{s.getpeername()} is offline')
+        print(f'클라이언트 {s.getpeername()} 접속 종료')
         # 해당 커넥션 소켓 닫음
         s.close()
         # 소켓 리스트에서 삭제
@@ -152,10 +153,15 @@ class MainServer:
         self.execute_db(sql)
 
     # 명령문 전송
-    @staticmethod
-    def send_command(command, content, s):
-        data = json.dumps([command, content])
-        s.send(data.encode())
+    def send_command(self, command, content, s):
+        message = [command, content, s]
+        if self.past_message == message:
+            pass
+        else:
+            data = json.dumps([command, content])
+            print(f'보낸 메시지: {data} [{datetime.datetime.now()}]')
+            s.send(data.encode())
+            self.past_message = message
 
     # DB 작업
     @staticmethod
@@ -217,6 +223,9 @@ class MainServer:
 
         elif command == '/refuse':
             self.refuse(s)
+
+        elif command == '/renew_room_list':
+            self.renew_room_list(s)
 
     # /setup_nickname 명령문
     def setup_nickname(self, user_ip, nickname, s):
@@ -284,7 +293,6 @@ class MainServer:
     # /get_room_list 명령문
     # DB를 통해 현재 개설된 채팅방의 정보를 정리하여 클라이언트에게 전달
     def get_room_list(self, s):
-        print(1)
         sql = 'SELECT DISTINCT a.port, b.닉네임 FROM chat AS a INNER JOIN state AS b on a.생성자=b.ip;'
         temp = self.execute_db(sql)
         # 반복문을 활용해 유저 정보를 리스트로 만들어서 전송
@@ -318,8 +326,6 @@ class MainServer:
             self.make_chat_room_db(nickname, empty_port)
             # 해당 채팅방 개설과 관련된 작업을 클라이언트에게 지시
             self.send_command('/open_chat_room', empty_port, s)
-            time.sleep(0.2)
-            # self.renew_room_list(s)
 
     # 생성자 IP 정보를 DB에서 받아와서 현재 접속 IP와 대조함, 일치시 1, 일치하는 값 없을 시 0 반환
     def check_have_room(self, user_ip):
@@ -375,7 +381,6 @@ class MainServer:
         try:
             sql = f'SELECT * FROM chat WHERE port={chat_port} ORDER BY 시간 LIMIT 10;'
             temp = self.execute_db(sql)
-            print(temp)
             # 0=방번호, 1=닉네임, 2시간, 3=채팅내용, 4=생성자, 5=포트 // 시간 닉네임 생성자 순으로 정렬
             for i in range(len(temp)):
                 if temp[i][3] == '님이 채팅방을 생성하였습니다':
@@ -424,7 +429,6 @@ class MainServer:
         for sock in self.chat_list:
             if sock.getsockname()[1] == s.getsockname()[1]:
                 same_port_user.append(sock)
-                print(sock.getsockname())
 
         return same_port_user
 

@@ -169,8 +169,8 @@
     <recent_temporary>
       <list>
         <item itemvalue="Python.chat_client" />
-        <item itemvalue="Python.chat_server" />
         <item itemvalue="Python.new" />
+        <item itemvalue="Python.chat_server" />
         <item itemvalue="Python.jy_chat_client" />
         <item itemvalue="Python.jy_chat_server" />
       </list>
@@ -184,13 +184,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1675049941553</updated>
-    </task>
-    <task id="LOCAL-00022" summary="230131 ElisaBluebell">
-      <created>1675135312241</created>
-      <option name="number" value="00022" />
-      <option name="presentableId" value="LOCAL-00022" />
-      <option name="project" value="LOCAL" />
-      <updated>1675135312241</updated>
     </task>
     <task id="LOCAL-00023" summary="230131 ElisaBluebell">
       <created>1675136854016</created>
@@ -528,7 +521,14 @@
       <option name="project" value="LOCAL" />
       <updated>1675411478413</updated>
     </task>
-    <option name="localTasksCounter" value="71" />
+    <task id="LOCAL-00071" summary="230203 ElisaBluebell">
+      <created>1675412389403</created>
+      <option name="number" value="00071" />
+      <option name="presentableId" value="LOCAL-00071" />
+      <option name="project" value="LOCAL" />
+      <updated>1675412389403</updated>
+    </task>
+    <option name="localTasksCounter" value="72" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
