@@ -207,11 +207,16 @@ class MainServer:
             self.get_member_list(content[0], content[1], s)
 
         elif command == '/invitation':
-            for i in self.sock_list:
+            name = content[0]
+            port = content[1]
+            sql = f"select ip from state where 닉네임 ='{name}';"
+            invite_ip = self.execute_db(sql)[0][0]
+            for i in self.client_list:
                 try:
-                    print(i.getpeername())
+                    if invite_ip in i.getpeername():
+                        self.send_command('/invitation', port, i)
                 except:
-                    pass
+                    self.send_command('/invitation_failed', '', s)
 
         elif command == '/chat':
             self.chat_process(user_ip, content, s)
