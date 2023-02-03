@@ -12,6 +12,7 @@ from socket import *
 from tkinter import messagebox, Tk
 
 qt_ui = uic.loadUiType('main_temp.ui')[0]
+my_ip = '10.10.21.108'
 
 
 class MainWindow(QWidget, qt_ui):
@@ -26,6 +27,7 @@ class MainWindow(QWidget, qt_ui):
         self.sock = socket()
         self.socks = []
         self.BUFFER = 1024
+        self.invitation_preparation = False
 
         self.set_nickname.clicked.connect(self.check_nickname)
         self.nickname_input.returnPressed.connect(self.check_nickname)
@@ -40,7 +42,7 @@ class MainWindow(QWidget, qt_ui):
         self.sock.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
 
         self.socks.append(self.sock)
-        self.sock.connect(('10.10.21.121', 9000))
+        self.sock.connect((my_ip, 9000))
         self.thread_switch = 1
 
         get_message = threading.Thread(target=self.get_message, daemon=True)
@@ -189,11 +191,12 @@ class MainWindow(QWidget, qt_ui):
     def open_chat_room(self, port):
         self.connect_to_chat_room(port)
         self.move_to_chat_room()
+        self.show_member(port)
 
     # 서버와 연결된 소켓 정보를 초기화한 뒤 서버로부터 전달받은 채팅방 포트로 재연결
     def connect_to_chat_room(self, port):
         self.reinitialize_socket()
-        self.sock.connect(('10.10.21.121', port))
+        self.sock.connect((my_ip, port))
 
     def reinitialize_socket(self):
         self.thread_switch = 0
@@ -212,6 +215,13 @@ class MainWindow(QWidget, qt_ui):
     def move_to_chat_room(self):
         self.welcome.setText('')
         self.Client.setCurrentIndex(1)
+
+    # 하는중
+    def show_member(self, port):
+        if not self.invitation_preparation:
+            self.send_command('/show_member', [f'{self.invitation_preparation}', port])
+        else:
+            self.send_command('/show_member', [f'{self.invitation_preparation}', port])
 
     # 채팅방 이름 더블클릭
     # 채팅방 입장 확인을 받고 채팅방 입장 결정시 서버에 해당 채팅방의 포트를 요청
@@ -275,10 +285,11 @@ class MainWindow(QWidget, qt_ui):
     def go_main(self):
         self.connect_to_main()
         self.Client.setCurrentIndex(0)
+        self.invitation_preparation = False
 
     def connect_to_main(self):
         self.reinitialize_socket()
-        self.sock.connect(('10.10.21.121', 9000))
+        self.sock.connect((my_ip, 9000))
 
 # DB 작업
 def execute_db(sql):
