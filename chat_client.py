@@ -86,7 +86,6 @@ class MainWindow(QWidget, qt_ui):
             # else:
             #     self.set_user_list(self.member_list, content)
             #     print(self.member_list)
-            #     print(content)
 
         elif command == '/set_room_list':
             self.set_room_list(content)
