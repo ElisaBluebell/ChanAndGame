@@ -407,8 +407,9 @@ class MainServer:
 
     def fire_the_chat(self):
         for sock in self.client_list:
+            pass
             # print(self.s_sock.getpeername())
-            print(sock.getpeername())
+            # print(sock.getpeername())
 
     # 채팅창에서 참가자 및 초대 가능한 사람 보여주기
     def get_member_list(self, state, port, s):
