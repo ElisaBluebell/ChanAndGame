@@ -109,6 +109,10 @@ class MainWindow(QWidget, qt_ui):
         elif command == '/load_recent_chat':
             self.load_recent_chat(content)
 
+        elif command == '/invitation':
+            self.invite_user(content)
+
+
     # /setup_nickname 명령문
     # 서버에 닉네임 설정 프로세스를 요청을 보내고 닉네임 입력창을 클리어
     def setup_nickname(self):
@@ -264,8 +268,11 @@ class MainWindow(QWidget, qt_ui):
                 self.chat_list.insertItem(row, f'[{content[i][0][11:-3]}]{content[i][1]}{content[i][2]}')
                 row += 1
 
-    def invite_user(self):
-        pass
+    def invite_user(self, port):
+        tk_window = Tk()
+        tk_window.geometry("0x0+3000+6000")
+        messagebox.showinfo('초대', f'{port}방 에서 초대장이 왔습니다.')
+        tk_window.destroy()
 
     def receive_chat(self):
         pass
@@ -313,7 +320,7 @@ class MainWindow(QWidget, qt_ui):
             self.send_command('/show_member', [f'{self.invitation_preparation}', port])
 
     def invitation(self, user):
-        self.send_command('/invitation', user)
+        self.send_command('/invitation', [user, self.port])
 
 
 if __name__ == '__main__':
