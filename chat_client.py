@@ -6,7 +6,7 @@ import threading
 import time
 
 from PyQt5 import uic
-from PyQt5.QtWidgets import QApplication, QLabel, QMessageBox, QWidget, QListWidget
+from PyQt5.QtWidgets import QApplication, QLabel, QMessageBox, QWidget
 from select import *
 from socket import *
 from tkinter import messagebox, Tk
@@ -113,6 +113,7 @@ class MainWindow(QWidget, qt_ui):
 
         elif command == '/invitation':
             self.invite_user(content)
+            pass
 
         elif command == '/print_chat':
             self.print_chat(content)
@@ -275,7 +276,11 @@ class MainWindow(QWidget, qt_ui):
     def invite_user(self, port):
         tk_window = Tk()
         tk_window.geometry("0x0+3000+6000")
-        messagebox.showinfo('초대', f'{port}방 에서 초대장이 왔습니다.')
+        reply = messagebox.askquestion('초대장', f'{port}방 에서 초대장이 왔습니다. 입장하시겠습니까?')
+        if reply == 'yes':
+            print('허락')
+        else:
+            print('거절')
         tk_window.destroy()
 
     def receive_chat(self):
@@ -287,6 +292,8 @@ class MainWindow(QWidget, qt_ui):
         self.chat.clear()
 
     def go_main(self):
+        self.invitation_preparation = False
+        self.member_button()
         self.Client.setCurrentIndex(0)
         self.connect_to_main()
         self.chat.clear()
@@ -297,6 +304,7 @@ class MainWindow(QWidget, qt_ui):
         self.port = 9000
         self.sock.connect((my_ip, self.port))
 
+    # 채팅창 출력
     def print_chat(self, content):
         self.chat_list.addItem(content)
 
@@ -304,7 +312,7 @@ class MainWindow(QWidget, qt_ui):
     def click_member(self):
         self.invitation_preparation = False
         self.show_member(self.port)
-        self.member.hide()
+        self.member_button()
 
     # 채팅창에서 초대하기 버튼 눌렸을때 대기창 인원 보여주기 및 초대하기
     def click_invite(self):
@@ -317,7 +325,13 @@ class MainWindow(QWidget, qt_ui):
         else:
             self.invitation_preparation = True
             self.show_member(self.port)
+            self.member_button()
+
+    def member_button(self):
+        if self.invitation_preparation:
             self.member.show()
+        else:
+            self.member.hide()
 
     # 하는중
     def show_member(self, port):
