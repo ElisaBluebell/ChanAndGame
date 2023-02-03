@@ -204,7 +204,15 @@ class MainServer:
             self.load_chat(content, s)
 
         elif command == '/show_member':
-            self.get_member_list(user_ip, content[0], content[1], s)
+            self.get_member_list(content[0], content[1], s)
+
+        elif command == '/invitation':
+            for s in self.server_list:
+                # 접속받은 소켓과 주소 설정
+                c_sock, addr = s.accept()
+                print(c_sock)
+                print(addr)
+            pass
 
     # /setup_nickname 명령문
     def setup_nickname(self, user_ip, nickname, s):
@@ -279,7 +287,7 @@ class MainServer:
     # /get_room_list 명령문
     # DB를 통해 현재 개설된 채팅방의 정보를 정리하여 클라이언트에게 전달
     def get_room_list(self, s):
-        sql = 'SELECT DISTINCT a.방번호, b.닉네임 FROM chat AS a INNER JOIN state AS b on a.생성자=b.ip;'
+        sql = 'SELECT DISTINCT a.port, b.닉네임 FROM chat AS a INNER JOIN state AS b on a.생성자=b.ip;'
         temp = self.execute_db(sql)
         # 반복문을 활용해 유저 정보를 리스트로 만들어서 전송
         room_list = self.array_room_list(temp)
@@ -306,11 +314,10 @@ class MainServer:
         # 해당 유저가 방을 개설하지 않았을 경우
         else:
             # 빈 방 번호와 부여할 포트 번호 체크, 방 번호는 1번부터 100번까지, 포트 번호는 9001번부터 9100번까지 사용
-            empty_room_number = self.empty_number_checker('방번호', 1, 101)
             empty_port = self.empty_number_checker('port', 9001, 9101)
 
             # 채팅방 DB를 만들고
-            self.make_chat_room_db(nickname, empty_room_number, empty_port)
+            self.make_chat_room_db(nickname, empty_port)
             # 해당 채팅방 개설과 관련된 작업을 클라이언트에게 지시
             self.send_command('/open_chat_room', empty_port, s)
 
@@ -345,8 +352,8 @@ class MainServer:
                 return i
 
     # 닉네임, 빈 방 번호와 빈 포트 번호를 받아 DB에 해당하는 채팅방 정보 작성
-    def make_chat_room_db(self, nickname, empty_room_number, empty_port):
-        sql = f'''INSERT INTO chat VALUES ({empty_room_number}, "{nickname}", 
+    def make_chat_room_db(self, nickname, empty_port):
+        sql = f'''INSERT INTO chat VALUES ("{nickname}", 
         "{str(datetime.datetime.now())[:-7]}", "님이 채팅방을 생성하였습니다.", 
         "{socket.gethostbyname(socket.gethostname())}", "{empty_port}");'''
         self.execute_db(sql)
@@ -370,7 +377,6 @@ class MainServer:
             temp = self.execute_db(sql)
             # 0=방번호, 1=닉네임, 2시간, 3=채팅내용, 4=생성자, 5=포트 // 시간 닉네임 생성자 순으로 정렬
             for i in range(len(temp)):
-                print(temp)
                 if temp[i][3] == '님이 채팅방을 생성하였습니다':
                     recent_chat.append([temp[i][2], temp[i][1], temp[i][3]])
                 else:
@@ -381,9 +387,8 @@ class MainServer:
 
         self.send_command('/load_recent_chat', recent_chat, s)
 
-
-    # 하는중
-    def get_member_list(self, user_ip, state, port, s):
+    # 채팅창에서 참가자 및 초대 가능한 사람 보여주기
+    def get_member_list(self, state, port, s):
         if state == 'True':
             self.show_user(9000, s)
         else:

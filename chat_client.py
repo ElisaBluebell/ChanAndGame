@@ -12,7 +12,7 @@ from socket import *
 from tkinter import messagebox, Tk
 
 qt_ui = uic.loadUiType('main_temp.ui')[0]
-my_ip = '10.10.21.121'
+my_ip = '10.10.21.108'
 
 
 class MainWindow(QWidget, qt_ui):
@@ -29,11 +29,14 @@ class MainWindow(QWidget, qt_ui):
         self.BUFFER = 1024
         self.port = 9000
         self.invitation_preparation = False
+        self.member.hide()
 
         self.set_nickname.clicked.connect(self.check_nickname)
         self.make_room.clicked.connect(self.make_chat_room)
         self.room_list.clicked.connect(self.enter_chat_room)
         self.exit.clicked.connect(self.go_main)
+        self.member.clicked.connect(self.click_member)
+        self.invite.clicked.connect(self.click_invite)
 
         self.nickname_input.returnPressed.connect(self.check_nickname)
         self.chat.returnPressed.connect(self.send_chat)
@@ -209,7 +212,6 @@ class MainWindow(QWidget, qt_ui):
         self.port = port
         self.connect_to_chat_room()
         self.move_to_chat_room()
-        # self.show_member(port)
 
     # 서버와 연결된 소켓 정보를 초기화한 뒤 서버로부터 전달받은 채팅방 포트로 재연결
     def connect_to_chat_room(self):
@@ -235,13 +237,6 @@ class MainWindow(QWidget, qt_ui):
         self.setup_chatroom()
         self.Client.setCurrentIndex(1)
 
-    # 하는중
-    def show_member(self, port):
-        if not self.invitation_preparation:
-            self.send_command('/show_member', [f'{self.invitation_preparation}', port])
-        else:
-            self.send_command('/show_member', [f'{self.invitation_preparation}', port])
-
     # 채팅방 이름 더블클릭
     # 채팅방 입장 확인을 받고 채팅방 입장 결정시 서버에 해당 채팅방의 포트를 요청
     def enter_chat_room(self):
@@ -258,8 +253,8 @@ class MainWindow(QWidget, qt_ui):
     def setup_chatroom(self):
         # 채팅창 클리어
         self.chat_list.clear()
-        # self.send_command('/show_user', self.port)
-        # time.sleep(0.2)
+        self.send_command('/show_user', self.port)
+        time.sleep(0.2)
         self.send_command('/load_chat', self.port)
 
     def load_recent_chat(self, content):
@@ -292,6 +287,32 @@ class MainWindow(QWidget, qt_ui):
         self.port = 9000
         self.sock.connect((my_ip, self.port))
 
+    # 채팅창에서 참가자보기 버튼 눌렸을때
+    def click_member(self):
+        self.invitation_preparation = False
+        self.show_member(self.port)
+        self.member.hide()
+
+    # 채팅창에서 초대하기 버튼 눌렸을때 대기창 인원 보여주기 및 초대하기
+    def click_invite(self):
+        if self.invitation_preparation:
+            member = self.member_list.currentItem().text()
+            if member:
+                self.invitation(member)
+        else:
+            self.invitation_preparation = True
+            self.show_member(self.port)
+            self.member.show()
+
+    # 하는중
+    def show_member(self, port):
+        if not self.invitation_preparation:
+            self.send_command('/show_member', [f'{self.invitation_preparation}', port])
+        else:
+            self.send_command('/show_member', [f'{self.invitation_preparation}', port])
+
+    def invitation(self, user):
+        self.send_command('/invitation', user)
 
 if __name__ == '__main__':
     faulthandler.enable()
