@@ -4,9 +4,10 @@ import pymysql
 import socket
 import sys
 import threading
+import time
 
 from PyQt5 import uic
-from PyQt5.QtWidgets import QApplication, QLabel, QMessageBox, QWidget
+from PyQt5.QtWidgets import QApplication, QLabel, QMessageBox, QWidget, QStackedWidget
 from select import *
 from socket import *
 from tkinter import messagebox, Tk
@@ -27,13 +28,16 @@ class MainWindow(QWidget, qt_ui):
         self.sock = socket()
         self.socks = []
         self.BUFFER = 1024
+        self.port = 9000
         self.invitation_preparation = False
 
         self.set_nickname.clicked.connect(self.check_nickname)
-        self.nickname_input.returnPressed.connect(self.check_nickname)
         self.make_room.clicked.connect(self.make_chat_room)
         self.room_list.clicked.connect(self.enter_chat_room)
         self.exit.clicked.connect(self.go_main)
+
+        self.nickname_input.returnPressed.connect(self.check_nickname)
+        self.chat.returnPressed.connect(self.send_chat)
 
         self.connect_to_main_server()
 
@@ -42,7 +46,7 @@ class MainWindow(QWidget, qt_ui):
         self.sock.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
 
         self.socks.append(self.sock)
-        self.sock.connect((my_ip, 9000))
+        self.sock.connect((my_ip, self.port))
         self.thread_switch = 1
 
         get_message = threading.Thread(target=self.get_message, daemon=True)
@@ -52,7 +56,7 @@ class MainWindow(QWidget, qt_ui):
     def get_message(self):
         while True:
             if self.thread_switch == 1:
-                r_sock, w_sock, e_sock = select(self.socks, [], [], 0)
+                r_sock, dummy1, dummy2 = select(self.socks, [], [], 0)
                 if r_sock:
                     for s in r_sock:
                         if s == self.sock:
@@ -73,14 +77,19 @@ class MainWindow(QWidget, qt_ui):
         if command == '/setup_nickname':
             self.setup_nickname()
 
-        elif command == '/set_nickname_complete' or command == '/set_nickname_label':
+        elif command == '/set_nickname_complete':
             self.show_nickname(content)
 
         elif command == '/nickname_exists':
             self.nickname_exists()
 
         elif command == '/set_user_list':
-            self.set_user_list(content)
+            if self.Client.currentIndex() == 0:
+                self.set_user_list(self.accessor_list, content)
+                self.show_room_list()
+            # else:
+            #     self.set_user_list(self.member_list, content)
+            #     print(self.member_list)
 
         elif command == '/set_room_list':
             self.set_room_list(content)
@@ -90,6 +99,9 @@ class MainWindow(QWidget, qt_ui):
 
         elif command == '/open_chat_room':
             self.open_chat_room(content)
+
+        elif command == '/load_recent_chat':
+            self.load_recent_chat(content)
 
     # /setup_nickname 명령문
     # 서버에 닉네임 설정 프로세스를 요청을 보내고 닉네임 입력창을 클리어
@@ -117,7 +129,8 @@ class MainWindow(QWidget, qt_ui):
     def show_user_list(self):
         # 기존 접속자 리스트 초기화
         self.accessor_list.clear()
-        self.send_command('/get_main_user_list', '')
+        self.member_list.clear()
+        self.send_command('/show_user', self.port)
 
     # 닉네임 입력 체크
     def check_nickname(self):
@@ -147,11 +160,9 @@ class MainWindow(QWidget, qt_ui):
 
     # /set_user_list 명령문
     # 서버로부터 전달받은 유저 목록을 유저 목록 창에 출력하고 서버에 채팅방 목록을 요청함
-    def set_user_list(self, login_user_list):
+    def set_user_list(self, target, login_user_list):
         for i in range(len(login_user_list)):
-            self.accessor_list.insertItem(i, login_user_list[i])
-
-        self.show_room_list()
+            target.insertItem(i, login_user_list[i])
 
     # 채팅방 목록을 초기화하고 서버에 채팅방 목록을 요청하는 명령문 전송
     def show_room_list(self):
@@ -166,7 +177,8 @@ class MainWindow(QWidget, qt_ui):
 
     # /room_exists 명령문
     # 유저가 이미 채팅방을 개설했을 경우 서버로부터 해당 정보를 전달받아 알림창 출력
-    def room_exists(self):
+    @staticmethod
+    def room_exists():
         tk_window = Tk()
         tk_window.geometry("0x0+3000+6000")
         messagebox.showinfo('생성 불가', '이미 생성된 방이 있습니다.')
@@ -189,14 +201,15 @@ class MainWindow(QWidget, qt_ui):
     # /open_chat_room 명령문
     # 소켓 커넥션을 채팅방으로 변경하고 채팅방 페이지를 출력
     def open_chat_room(self, port):
-        self.connect_to_chat_room(port)
+        self.port = port
+        self.connect_to_chat_room()
         self.move_to_chat_room()
         self.show_member(port)
 
     # 서버와 연결된 소켓 정보를 초기화한 뒤 서버로부터 전달받은 채팅방 포트로 재연결
-    def connect_to_chat_room(self, port):
+    def connect_to_chat_room(self):
         self.reinitialize_socket()
-        self.sock.connect((my_ip, port))
+        self.sock.connect((my_ip, self.port))
 
     def reinitialize_socket(self):
         self.thread_switch = 0
@@ -214,6 +227,7 @@ class MainWindow(QWidget, qt_ui):
     # 환영 문구를 제거하고 위젯의 스택을 채팅방으로 옮김
     def move_to_chat_room(self):
         self.welcome.setText('')
+        self.setup_chatroom()
         self.Client.setCurrentIndex(1)
 
     # 하는중
@@ -235,43 +249,21 @@ class MainWindow(QWidget, qt_ui):
         else:
             pass
 
+    # 채팅 페이지 초기설정
     def setup_chatroom(self):
+        # 채팅창 클리어
         self.chat_list.clear()
-        self.show_user()
-        self.load_chat()
+        self.send_command('/show_user', self.port)
+        time.sleep(0.2)
+        self.send_command('/load_chat', self.port)
 
-    def load_chat(self):
-        pass
-        # row = 1
-        # temp = None
-        #
-        # try:
-        #     sql = 'SELECT * FROM chat WHERE port=9001 ORDER BY 시간 DESC LIMIT 21;'
-        #     temp = execute_db(sql)
-        # except:
-        #     pass
-        # if temp is not None:
-        #     for i in range(len(temp), 1, -1):
-        #         self.chat_list.insertItem(row, f'[{temp[i - 1][2][5:-3]}]{temp[i - 1][1]}: {temp[i - 1][3]}')
-        #         row += 1
-        # self.chat_list.clicked.connect(self.printa)
+    def load_recent_chat(self, content):
+        row = 1
 
-    def room_create_info(self):
-        pass
-        # # 통신 미적용으로 인해 임의로 9001번 포트 줌
-        # sql = 'SELECT * FROM chat WHERE port=9001 LIMIT 1;'
-        # chat_log = execute_db(sql)
-        # self.chat_list.insertItem(0, f'[{chat_log[0][2][:-3]}]{chat_log[0][1]}{chat_log[0][3]}')
-
-    def printa(self):
-        # chat_list = QListWidget
-        print(self.chat_list.currentItem().text())
-
-    def show_user(self):
-        pass
-
-    def connect_server(self):
-        pass
+        if content is not None:
+            for i in range(len(content)):
+                self.chat_list.insertItem(row, f'[{content[i][0][11:-3]}]{content[i][1]}{content[i][2]}')
+                row += 1
 
     def invite_user(self):
         pass
@@ -289,11 +281,12 @@ class MainWindow(QWidget, qt_ui):
 
     def connect_to_main(self):
         self.reinitialize_socket()
-        self.sock.connect((my_ip, 9000))
+        self.sock.connect((my_ip, self.port))
+
 
 # DB 작업
 def execute_db(sql):
-    conn = pymysql.connect(user='elisa', password='0000', host='10.10.21.108', port = 3306, database='chatandgame')
+    conn = pymysql.connect(user='elisa', password='0000', host='10.10.21.108', port=3306, database='chatandgame')
     c = conn.cursor()
 
     # 인수로 받아온 쿼리문에 해당하는 작업 수행
