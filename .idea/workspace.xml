@@ -6,6 +6,7 @@
   <component name="ChangeListManager">
     <list default="true" id="12a35f88-34b3-481c-9af1-3bacfbe34dfa" name="Changes" comment="230203 ElisaBluebell">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/chat_client.py" beforeDir="false" afterPath="$PROJECT_DIR$/chat_client.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/chat_server.py" beforeDir="false" afterPath="$PROJECT_DIR$/chat_server.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -183,13 +184,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1675049941553</updated>
-    </task>
-    <task id="LOCAL-00016" summary="230131 ElisaBluebell">
-      <created>1675129574373</created>
-      <option name="number" value="00016" />
-      <option name="presentableId" value="LOCAL-00016" />
-      <option name="project" value="LOCAL" />
-      <updated>1675129574373</updated>
     </task>
     <task id="LOCAL-00017" summary="230131 ElisaBluebell">
       <created>1675132252210</created>
@@ -527,7 +521,14 @@
       <option name="project" value="LOCAL" />
       <updated>1675405658471</updated>
     </task>
-    <option name="localTasksCounter" value="65" />
+    <task id="LOCAL-00065" summary="230203 ElisaBluebell">
+      <created>1675406012921</created>
+      <option name="number" value="00065" />
+      <option name="presentableId" value="LOCAL-00065" />
+      <option name="project" value="LOCAL" />
+      <updated>1675406012922</updated>
+    </task>
+    <option name="localTasksCounter" value="66" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">

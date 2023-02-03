@@ -377,9 +377,9 @@ class MainServer:
             # 0=방번호, 1=닉네임, 2시간, 3=채팅내용, 4=생성자, 5=포트 // 시간 닉네임 생성자 순으로 정렬
             for i in range(len(temp)):
                 if temp[i][3] == '님이 채팅방을 생성하였습니다':
-                    recent_chat.append([temp[i][1], temp[i][0], temp[i][2]])
+                    recent_chat.append([temp[i][1][11:-3], temp[i][0], temp[i][2]])
                 else:
-                    recent_chat.append([temp[i][1], temp[i][0], f': {temp[i][2]}'])
+                    recent_chat.append([temp[i][1][11:-3], temp[i][0], f': {temp[i][2]}'])
 
         finally:
             pass
