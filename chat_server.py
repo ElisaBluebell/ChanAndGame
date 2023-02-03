@@ -4,7 +4,7 @@ import pymysql
 import socket
 import select
 import time
-
+import random
 
 class MainServer:
 
@@ -23,6 +23,8 @@ class MainServer:
         # 서버 오픈을 위한 포트와 아이피
         self.ip = socket.gethostbyname(socket.gethostname())
         self.port = 9000
+        # 스무고개 턴수
+        self.game_over = 20
 
         # 소켓 설정
         self.initialize_socket()
@@ -77,7 +79,7 @@ class MainServer:
                 else:
                     try:
                         # 받아온 바이트 데이터를 디코딩
-                        data = s.recv(self.BUFFER).decode()
+                        data = s.recv(self.BUFFER).decode('utf-8')
                         # 송신자와 데이터 확인을 위해 콘솔창 출력
                         print(f'Received: {s.getpeername()}: {data}')
 
@@ -217,6 +219,15 @@ class MainServer:
 
         elif command == '/refuse':
             self.refuse(s)
+
+        elif command == '/set_game':
+            self.check_game_entrant(content, s)
+
+        elif command == '/topic_selection':
+            self.set_topic(content[0], content[1])
+
+        else:
+            pass
 
     # /setup_nickname 명령문
     def setup_nickname(self, user_ip, nickname, s):
@@ -435,6 +446,7 @@ class MainServer:
         else:
             self.show_user(port, s)
 
+    # 채팅방에 초대하기
     def invite(self, name, nickname):
         sql = f"select ip from state where 닉네임 ='{name}';"
         invite_ip = self.execute_db(sql)[0][0]
@@ -445,8 +457,38 @@ class MainServer:
             except:
                 continue
 
+    # 초대 거절 메시지
     def refuse(self, s):
         self.send_command('/refuse', '', s)
+
+    # 게임 초기 셋팅
+    def check_game_entrant(self, port, s):
+        sql = f"select ip, 닉네임 from state where port = '{port}';"
+        member = self.execute_db(sql)
+        # if len(member) < 2:
+        #     self.send_command('/understaffed', '', s)
+        # else:
+        self.entrant_socket = []
+        presenter = random.choice(member)
+        for client_socket in self.client_list:
+            try:
+                for value in member:
+                    if value == presenter:
+                        self.send_command('/presenter', '', client_socket)
+                        self.presenter_socket = client_socket
+                    elif value[0] in client_socket.getpeername():
+                        self.send_command('/entrant', '', client_socket)
+                        self.entrant_socket.append(client_socket)
+            except:
+                continue
+        random.shuffle(self.entrant_socket)
+        self.game_trun = 0
+
+    # 주제 및 정답 정하기
+    def set_topic(self, topic, problem):
+        self.answer = problem
+        for entrant in self.entrant_socket:
+            self.send_command('/topic', topic, entrant)
 
 
 # 돌아라 돌아 ~.~
