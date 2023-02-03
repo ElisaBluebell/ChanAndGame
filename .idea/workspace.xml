@@ -184,13 +184,6 @@
       <option name="presentableId" value="Default" />
       <updated>1675049941553</updated>
     </task>
-    <task id="LOCAL-00013" summary="230131 ElisaBluebell">
-      <created>1675128908499</created>
-      <option name="number" value="00013" />
-      <option name="presentableId" value="LOCAL-00013" />
-      <option name="project" value="LOCAL" />
-      <updated>1675128908499</updated>
-    </task>
     <task id="LOCAL-00014" summary="230131 ElisaBluebell">
       <created>1675129122773</created>
       <option name="number" value="00014" />
@@ -527,7 +520,14 @@
       <option name="project" value="LOCAL" />
       <updated>1675402630166</updated>
     </task>
-    <option name="localTasksCounter" value="62" />
+    <task id="LOCAL-00062" summary="230203 jyw 채팅방 초대 신호 전달">
+      <created>1675405142359</created>
+      <option name="number" value="00062" />
+      <option name="presentableId" value="LOCAL-00062" />
+      <option name="project" value="LOCAL" />
+      <updated>1675405142359</updated>
+    </task>
+    <option name="localTasksCounter" value="63" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -552,7 +552,8 @@
     <MESSAGE value="230202 ElisaBluebell" />
     <MESSAGE value="230203 jyw 채팅방 맴버확인" />
     <MESSAGE value="230203 ElisaBluebell" />
-    <option name="LAST_COMMIT_MESSAGE" value="230203 ElisaBluebell" />
+    <MESSAGE value="230203 jyw 채팅방 초대 신호 전달" />
+    <option name="LAST_COMMIT_MESSAGE" value="230203 jyw 채팅방 초대 신호 전달" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
