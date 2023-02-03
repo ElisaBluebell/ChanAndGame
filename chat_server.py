@@ -203,6 +203,9 @@ class MainServer:
         elif command == '/load_chat':
             self.load_chat(content, s)
 
+        elif command == '/show_member':
+            self.get_member_list(user_ip, content[0], content[1], s)
+
     # /setup_nickname 명령문
     def setup_nickname(self, user_ip, nickname, s):
         # 유저 IP에 해당하는 닉네임과 상태 정보 삭제
@@ -262,7 +265,6 @@ class MainServer:
         chat_user_list = self.get_single_item_list('닉네임', 'state', 'port', port)
         chat_user_list = self.array_list(chat_user_list)
         self.send_command('/set_user_list', chat_user_list, s)
-
 
     # 반복문을 활용해 인수로 받은 유저 정보를 리스트로 만들어 반환
     @staticmethod
@@ -379,6 +381,16 @@ class MainServer:
 
         self.send_command('/load_recent_chat', recent_chat, s)
 
+
+    # 하는중
+    def get_member_list(self, user_ip, state, port, s):
+        if state == 'True':
+            print('참')
+            pass
+        else:
+            sql = f"select 닉네임 from state where port ='{port}'"
+            member = self.execute_db(sql)
+            self.send_command('/')
 
 
 # 돌아라 돌아 ~.~
