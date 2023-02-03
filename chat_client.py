@@ -12,9 +12,7 @@ from socket import *
 from tkinter import messagebox, Tk
 
 qt_ui = uic.loadUiType('main_temp.ui')[0]
-# my_ip = gethostbyname(gethostname())
-my_ip = '10.10.21.121'
-server_ip = '10.10.21.121'
+server_ip = '10.10.21.108'
 
 
 class MainWindow(QWidget, qt_ui):
@@ -50,7 +48,7 @@ class MainWindow(QWidget, qt_ui):
         self.sock.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
 
         self.socks.append(self.sock)
-        self.sock.connect((my_ip, self.port))
+        self.sock.connect((server_ip, self.port))
         self.thread_switch = 1
 
         get_message = threading.Thread(target=self.get_message, daemon=True)
@@ -112,7 +110,8 @@ class MainWindow(QWidget, qt_ui):
             self.load_recent_chat(content)
 
         elif command == '/invitation':
-            self.invite_user(content)
+            # self.invite_user(content)
+            pass
 
     # /setup_nickname 명령문
     # 서버에 닉네임 설정 프로세스를 요청을 보내고 닉네임 입력창을 클리어
@@ -220,7 +219,7 @@ class MainWindow(QWidget, qt_ui):
     # 서버와 연결된 소켓 정보를 초기화한 뒤 서버로부터 전달받은 채팅방 포트로 재연결
     def connect_to_chat_room(self):
         self.reinitialize_socket()
-        self.sock.connect((my_ip, self.port))
+        self.sock.connect((server_ip, self.port))
 
     def reinitialize_socket(self):
         self.thread_switch = 0
@@ -292,7 +291,7 @@ class MainWindow(QWidget, qt_ui):
     def connect_to_main(self):
         self.reinitialize_socket()
         self.port = 9000
-        self.sock.connect((my_ip, self.port))
+        self.sock.connect((server_ip, self.port))
 
     # 채팅창에서 참가자보기 버튼 눌렸을때
     def click_member(self):
