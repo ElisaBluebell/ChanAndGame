@@ -54,8 +54,6 @@ class MainWindow(QWidget, qt_ui):
         get_message = threading.Thread(target=self.get_message, daemon=True)
         get_message.start()
 
-        # self.send_command()
-
     # 수신한 메시지를 원래 형태로 복원하여 명령 부분으로 전송
     def get_message(self):
         while True:
