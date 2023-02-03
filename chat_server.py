@@ -207,7 +207,11 @@ class MainServer:
             self.get_member_list(content[0], content[1], s)
 
         elif command == '/invitation':
-            pass
+            for i in self.sock_list:
+                try:
+                    print(i.getpeername())
+                except:
+                    pass
 
     # /setup_nickname 명령문
     def setup_nickname(self, user_ip, nickname, s):
