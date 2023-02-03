@@ -83,10 +83,10 @@ class MainWindow(QWidget, qt_ui):
             if self.Client.currentIndex() == 0:
                 self.set_user_list(self.accessor_list, content)
                 self.show_room_list()
-            else:
-                self.set_user_list(self.member_list, content)
-                print(self.member_list)
-                print(content)
+            # else:
+            #     self.set_user_list(self.member_list, content)
+            #     print(self.member_list)
+            #     print(content)
 
         elif command == '/set_room_list':
             self.set_room_list(content)
