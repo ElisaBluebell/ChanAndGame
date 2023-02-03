@@ -12,7 +12,7 @@ from socket import *
 from tkinter import messagebox, Tk
 
 qt_ui = uic.loadUiType('main_temp.ui')[0]
-my_ip = '10.10.21.108'
+my_ip = '10.10.21.121'
 
 
 class MainWindow(QWidget, qt_ui):
@@ -203,7 +203,7 @@ class MainWindow(QWidget, qt_ui):
         self.port = port
         self.connect_to_chat_room()
         self.move_to_chat_room()
-        self.show_member(port)
+        # self.show_member(port)
 
     # 서버와 연결된 소켓 정보를 초기화한 뒤 서버로부터 전달받은 채팅방 포트로 재연결
     def connect_to_chat_room(self):
@@ -271,16 +271,20 @@ class MainWindow(QWidget, qt_ui):
         pass
 
     def send_chat(self):
-        pass
+        chat_content = self.chat.text()
+        print(chat_content)
+        self.chat.clear()
 
     def go_main(self):
-        self.connect_to_main()
         self.Client.setCurrentIndex(0)
+        self.connect_to_main()
+        self.chat.clear()
         self.invitation_preparation = False
 
     def connect_to_main(self):
         self.reinitialize_socket()
-        self.sock.connect((my_ip, 9000))
+        self.port = 9000
+        self.sock.connect((my_ip, self.port))
 
 
 if __name__ == '__main__':
