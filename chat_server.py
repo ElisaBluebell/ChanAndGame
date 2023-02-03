@@ -200,6 +200,12 @@ class MainServer:
         elif command == '/request_port':
             self.give_port(content, s)
 
+        elif command == '/load_chat':
+            self.load_chat(content, s)
+
+        elif command == '/show_user':
+            pass
+
     # /setup_nickname 명령문
     def setup_nickname(self, user_ip, nickname, s):
         # 유저 IP에 해당하는 닉네임과 상태 정보 삭제
@@ -342,6 +348,28 @@ class MainServer:
         port = self.execute_db(sql)[0][0]
 
         self.send_command('/open_chat_room', port, s)
+
+    # /load_chat 명령문
+    # DB에서 채팅 기록을 로드하여 클라이언트에게 전달
+    def load_chat(self, chat_port, s):
+        # 최근 채팅 내역을 저장해줄 리스트 선언
+        recent_chat = []
+
+        try:
+            sql = f'SELECT * FROM chat WHERE port={chat_port} ORDER BY 시간 LIMIT 19;'
+            temp = self.execute_db(sql)
+            # 0=방번호, 1=닉네임, 2시간, 3=채팅내용, 4=생성자, 5=포트 // 시간 닉네임 생성자 순으로 정렬
+            for i in range(len(temp)):
+                print(temp)
+                if temp[i][3] == '님이 채팅방을 생성하였습니다':
+                    recent_chat.append([temp[i][2], temp[i][1], temp[i][3]])
+                else:
+                    recent_chat.append([temp[i][2], temp[i][1], f': {temp[i][3]}'])
+
+        except:
+            pass
+
+        self.send_command('/load_recent_chat', recent_chat, s)
 
 
 # 돌아라 돌아 ~.~
