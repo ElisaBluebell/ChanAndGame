@@ -20,6 +20,7 @@ class MainWindow(QWidget, qt_ui):
         self.setupUi(self)
         self.Client.setCurrentIndex(0)
         self.welcome = QLabel(self)
+        self.thread_switch = 0
 
         self.chat_client = ''
         self.sock = socket()
@@ -40,6 +41,7 @@ class MainWindow(QWidget, qt_ui):
 
         self.socks.append(self.sock)
         self.sock.connect(('10.10.21.121', 9000))
+        self.thread_switch = 1
 
         get_message = threading.Thread(target=self.get_message, daemon=True)
         get_message.start()
@@ -47,13 +49,14 @@ class MainWindow(QWidget, qt_ui):
     # 수신한 메시지를 원래 형태로 복원하여 명령 부분으로 전송
     def get_message(self):
         while True:
-            r_sock, w_sock, e_sock = select(self.socks, [], [], 0)
-            if r_sock:
-                for s in r_sock:
-                    if s == self.sock:
-                        message = eval(self.sock.recv(self.BUFFER).decode())
-                        print(f'받은 메시지: {message}')
-                        self.command_processor(message[0], message[1])
+            if self.thread_switch == 1:
+                r_sock, w_sock, e_sock = select(self.socks, [], [], 0)
+                if r_sock:
+                    for s in r_sock:
+                        if s == self.sock:
+                            message = eval(self.sock.recv(self.BUFFER).decode())
+                            print(f'받은 메시지: {message}')
+                            self.command_processor(message[0], message[1])
 
     def send_command(self, command, content):
         data = json.dumps([command, content])
@@ -193,6 +196,7 @@ class MainWindow(QWidget, qt_ui):
         self.sock.connect(('10.10.21.121', port))
 
     def reinitialize_socket(self):
+        self.thread_switch = 0
         # 소켓 리스트에서 소켓 제거 후 소켓 닫음
         self.socks.remove(self.sock)
         self.sock.close()
@@ -201,6 +205,8 @@ class MainWindow(QWidget, qt_ui):
         self.sock = socket()
         self.sock.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
         self.socks.append(self.sock)
+
+        self.thread_switch = 1
         
     # 환영 문구를 제거하고 위젯의 스택을 채팅방으로 옮김
     def move_to_chat_room(self):
