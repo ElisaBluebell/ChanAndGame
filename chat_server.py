@@ -266,7 +266,6 @@ class MainServer:
         chat_user_list = self.array_list(chat_user_list)
         self.send_command('/set_user_list', chat_user_list, s)
 
-
     # 반복문을 활용해 인수로 받은 유저 정보를 리스트로 만들어 반환
     @staticmethod
     def array_list(temp):

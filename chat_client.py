@@ -281,7 +281,7 @@ class MainWindow(QWidget, qt_ui):
 
     def connect_to_main(self):
         self.reinitialize_socket()
-        self.sock.connect((my_ip, self.port))
+        self.sock.connect((my_ip, 9000))
 
 
 # DB 작업
