@@ -109,7 +109,6 @@ class MainWindow(QWidget, qt_ui):
         elif command == '/load_recent_chat':
             self.load_recent_chat(content)
 
-
     # /setup_nickname 명령문
     # 서버에 닉네임 설정 프로세스를 요청을 보내고 닉네임 입력창을 클리어
     def setup_nickname(self):
@@ -315,6 +314,7 @@ class MainWindow(QWidget, qt_ui):
 
     def invitation(self, user):
         self.send_command('/invitation', user)
+
 
 if __name__ == '__main__':
     faulthandler.enable()
