@@ -112,7 +112,6 @@ class MainWindow(QWidget, qt_ui):
         elif command == '/invitation':
             self.invite_user(content)
 
-
     # /setup_nickname 명령문
     # 서버에 닉네임 설정 프로세스를 요청을 보내고 닉네임 입력창을 클리어
     def setup_nickname(self):
