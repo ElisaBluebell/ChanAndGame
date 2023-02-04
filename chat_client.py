@@ -36,8 +36,8 @@ class MainWindow(QWidget, qt_ui):
         self.BUFFER = 1024
         self.port = 9000
         self.invitation_preparation = False
-        self.game_state = False
-        self.subject.clear()
+        self.game_end_set()
+
 
         self.welcome = QLabel(self)
 
@@ -58,6 +58,14 @@ class MainWindow(QWidget, qt_ui):
 
         # 스무고개 주제 정하기
         self.set_subject.returnPressed.connect(self.topic_selection)
+        # 질문 입력
+        self.question.returnPressed.connect(self.enter_question)
+        # yes 답변
+        self.yes_bt.clicked.connect(self.answer_yes)
+        # no 답변
+        self.no_bt.clicked.connect(self.answer_no)
+        # 정답 맟추기
+        self.answer.returnPressed.connect(self.to_answer)
 
         self.connect_to_main_server()
 
@@ -155,13 +163,42 @@ class MainWindow(QWidget, qt_ui):
             self.entrant()
 
         elif command == '/topic':
-            self.subject.setText(content)
+            self.game_ready(content)
+
+        elif command == '/first_question':
+            self.game_ready(content)
+            self.question_client()
 
         elif command == '/game_abnormal_stop':
             self.game_stop()
 
         elif command == '/load_chat_again':
             self.load_chat_again()
+
+        elif command == '/show_question_list':
+            self.show_question_list(content)
+
+        elif command == '/show_question_list_presenter':
+            self.show_question_list(content)
+            self.answer_set()
+
+        elif command == '/next_question':
+            self.show_question_list(content)
+            self.question_client()
+
+        elif command == '/game_over':
+            tk_window = Tk()
+            tk_window.geometry("0x0+3000+6000")
+            messagebox.showinfo('안내창', 'Lose')
+            tk_window.destroy()
+            self.game_end_set()
+
+        elif command == '/game_win':
+            tk_window = Tk()
+            tk_window.geometry("0x0+3000+6000")
+            messagebox.showinfo('안내창', 'Win')
+            tk_window.destroy()
+            self.game_end_set()
 
         else:
             pass
@@ -470,6 +507,7 @@ class MainWindow(QWidget, qt_ui):
         topic = self.set_subject.text()
         if topic:
             self.set_subject.clear()
+            self.set_subject.hide()
             self.subject.setText(topic)
             tk_window = Tk()
             tk_window.geometry("0x0+3000+6000")
@@ -493,6 +531,7 @@ class MainWindow(QWidget, qt_ui):
         self.game_start.hide()
         self.exit.hide()
         self.question.hide()
+        self.yes_no_bt_inactive()
 
     # 게임 비정상 종료
     def game_stop(self):
@@ -507,9 +546,64 @@ class MainWindow(QWidget, qt_ui):
         self.game_stack.setCurrentIndex(0)
         self.game_state = False
         self.game_start.show()
-        self.exit.show()
-        self.question.show()
+        self.exit.hide()
+        self.question.clear()
+        self.question.hide()
         self.subject.clear()
+        self.question_list.clear()
+        self.set_subject.show()
+        self.yes_no_bt_inactive()
+        self.answer.clear()
+        self.answer.hide()
+
+    # 게임 준비 완료
+    def game_ready(self, topic):
+        self.subject.setText(topic)
+        self.answer.show()
+        tk_window = Tk()
+        tk_window.geometry("0x0+3000+6000")
+        messagebox.showinfo('안내창', '게임을 시작합니다.')
+        tk_window.destroy()
+
+    # 질문순서면 질문창 활성화
+    def question_client(self):
+        self.question.show()
+
+    # 질문하기
+    def enter_question(self):
+        question = self.question.text()
+        self.question.clear()
+        self.question.hide()
+        self.send_command('/enter_question', [question, self.port])
+
+    # 입력된 질문 보여 주기
+    def show_question_list(self, question):
+        self.question.addItem(question)
+
+    # 출제자 답편 활성화
+    def answer_set(self):
+        self.yes_bt.setEnsabled(True)
+        self.no_bt.setEnsabled(True)
+
+    # 출제자 예 답변
+    def answer_yes(self):
+        self.yes_no_bt_inactive()
+        self.send_command('/reply', ['예', self.port])
+
+    # 출제자 아니요 답변
+    def answer_no(self):
+        self.yes_no_bt_inactive()
+        self.send_command('/reply', ['아니요', self.port])
+
+    # 출제자 답변 버튼 비활성화
+    def yes_no_bt_inactive(self):
+        self.yes_bt.setDisabled(True)
+        self.no_bt.setDisabled(True)
+
+    def to_answer(self):
+        answer = self.answer.text()
+        self.answer.clear()
+        self.send_command('/to_answer', [answer, self.port])
 
 
 if __name__ == '__main__':
