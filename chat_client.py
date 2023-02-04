@@ -14,7 +14,7 @@ from socket import *
 from tkinter import messagebox, Tk
 
 qt_ui = uic.loadUiType('main_temp.ui')[0]
-server_ip = '10.10.21.121'
+server_ip = '10.10.21.108'
 
 
 class MainWindow(QWidget, qt_ui):
@@ -567,6 +567,7 @@ class MainWindow(QWidget, qt_ui):
 
     # 질문순서면 질문창 활성화
     def question_client(self):
+        print('질문창 활성화')
         self.question.show()
 
     # 질문하기
