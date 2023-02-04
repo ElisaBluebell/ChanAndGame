@@ -24,8 +24,8 @@ class MainServer:
         # 서버 오픈을 위한 포트와 아이피
         self.ip = socket.gethostbyname(socket.gethostname())
         self.port = 9000
-        # 스무고개 턴수
-        self.game_over = 20
+        # 스무고개 턴수 리스트
+        self.game_trun = []
         # 게임 참가자 소켓
         self.entrant_socket = []
         # 게임 출제자 소켓
@@ -157,8 +157,9 @@ class MainServer:
         # 연결 소실 인원이 게임 참가자 인경우 명단 삭제
         for entrant in self.entrant_socket:
             try:
-                if c_sock in entrant:
-                    self.game_abnormal_stop(entrant[0])
+                for i in entrant:
+                    if c_sock in i:
+                        self.game_abnormal_stop(entrant[0])
             except:
                 continue
         for presenter in self.presenter_socket:
@@ -268,8 +269,29 @@ class MainServer:
         elif command == '/topic_selection':
             self.set_topic(content[0], content[1], content[2])
 
+        elif command == '/enter_question':
+            self.show_question(content[0], content[1])
+
+        elif command == '/reply':
+            self.show_answer(content[0], content[1], s)
+
+        elif command == '/to_answer':
+            self.check_answer(content[0], content[1], content[2], s)
+
         else:
             pass
+
+    def check_answer(self, to_answer, port, s):
+        answer = ''
+        for i in self.answer:
+            if port in i:
+                answer = i[1]
+                break
+        if answer == to_answer:
+            self.game_over(port, s)
+        else:
+            self.send_command('/wrong_answer', '', s)
+        pass
 
     # /setup_nickname 명령문
     def setup_nickname(self, user_ip, nickname, s):
@@ -487,7 +509,6 @@ class MainServer:
         for sock in same_port_user:
             self.send_command('/show_user_list', '', sock)
 
-
     # 채팅창에서 참가자 및 초대 가능한 사람 보여주기
     def get_member_list(self, state, port, s):
         if state == 'True':
@@ -503,6 +524,7 @@ class MainServer:
             try:
                 if invite_ip in i.getpeername():
                     self.send_command('/invitation', nickname, i)
+                break
             except:
                 continue
 
@@ -514,44 +536,128 @@ class MainServer:
     def check_game_entrant(self, port, s):
         sql = f"select ip, 닉네임 from state where port = '{port}';"
         member = self.execute_db(sql)
-        # if len(member) < 2:
-        #     self.send_command('/understaffed', '', s)
-        # else:
-        presenter = random.choice(member)
-        for client_socket in self.client_list:
-            try:
-                for value in member:
-                    if value == presenter:
-                        self.send_command('/presenter', '', client_socket)
-                        self.presenter_socket.append([port, client_socket])
-                    elif value[0] in client_socket.getpeername():
-                        self.send_command('/entrant', '', client_socket)
-                        self.entrant_socket.append([port, client_socket])
-            except:
-                continue
-        random.shuffle(self.entrant_socket)
-        self.game_trun = 0
+        participant = []
+        if len(member) < 2:
+            self.send_command('/understaffed', '', s)
+        else:
+            presenter = random.choice(member)
+            for client_socket in self.client_list:
+                try:
+                    for value in member:
+                        if value == presenter:
+                            self.send_command('/presenter', '', client_socket)
+                            self.presenter_socket.append([port, client_socket])
+                        elif value[0] in client_socket.getpeername():
+                            self.send_command('/entrant', '', client_socket)
+                            participant.append([port, client_socket])
+                    random.shuffle(participant)
+                    self.entrant_socket.append(participant)
+                except:
+                    continue
+            self.game_trun.append([port, 0])
 
     # 주제 및 정답 정하기
     def set_topic(self, topic, problem, port):
         self.answer.append([port, problem])
         for entrant in self.entrant_socket:
-            if port in entrant:
-                self.send_command('/topic', topic, entrant[1])
+            if port in entrant[0]:
+                for idx, v in enumerate(entrant):
+                    if idx == 0:
+                        self.send_command('/first_question', topic, v[1])
+                    else:
+                        self.send_command('/topic', topic, v[1])
+                break
 
     # 게임 비정상 종료 알람
     def game_abnormal_stop(self, port):
         for ans in self.answer:
             if port in ans:
                 self.answer.remove(ans)
+            break
         for entrant in self.entrant_socket:
-            if port in entrant:
+            if port in entrant[0]:
+                for i in entrant:
+                    self.send_command('/game_abnormal_stop', '', i[1])
                 self.entrant_socket.remove(entrant)
-                self.send_command('/game_abnormal_stop', '', entrant[1])
+                break
         for presenter in self.presenter_socket:
             if port in presenter:
                 self.presenter_socket.remove(presenter)
                 self.send_command('/game_abnormal_stop', '', presenter[1])
+            break
+
+    # 질문 전송
+    def show_question(self, question, port):
+        for entrant in self.entrant_socket:
+            if port in entrant[0]:
+                for man in entrant:
+                    self.send_command('/show_question_list', question, man[1])
+                break
+        for presenter in self.presenter_socket:
+            if port in presenter:
+                self.send_command('/show_question_list_presenter', question, presenter[1])
+            break
+
+    def show_answer(self, answer, port, s):
+        turn = self.add_turn(port)
+        if turn < 20:
+            for entrant in self.entrant_socket:
+                if port in entrant[0]:
+                    question_turn = turn % len(entrant)
+                    for idx, man in enumerate(entrant):
+                        if idx == question_turn:
+                            self.send_command('/next_question', answer, man[1])
+                        else:
+                            self.send_command('/show_question_list', answer, man[1])
+                    break
+            for presenter in self.presenter_socket:
+                if port in presenter:
+                    self.send_command('/show_question_list', answer, presenter[1])
+                break
+        else:
+            self.game_over(port, s)
+
+    def game_over(self, port, s):
+        for entrant in self.entrant_socket:
+            if port in entrant[0]:
+                for man in entrant:
+                    ip = man[1].getpeername()[0]
+                    if s == man[1]:
+                        self.insert_game_db(ip, port, 'Win')
+                        self.send_command('/game_win', '', man[1])
+                    else:
+                        self.insert_game_db(ip, port, 'Lose')
+                        self.send_command('/game_over', '', man[1])
+                self.entrant_socket.remove(entrant)
+                break
+
+        for presenter in self.presenter_socket:
+            if port in presenter:
+                ip = presenter[1].getpeername()[0]
+                if s == presenter[1]:
+                    self.insert_game_db(ip, port, 'Win')
+                    self.send_command('/game_win', '', presenter[1])
+                else:
+                    self.insert_game_db(ip, port, 'Lose')
+                    self.send_command('/game_over', '', presenter[1])
+                self.presenter_socket.remove(presenter)
+            break
+        for i in self.game_trun:
+            if port in i:
+                self.game_trun.remove(i)
+            break
+
+    def insert_game_db(self, ip, port, result):
+        sql = f"select 닉네임 from state where ip ='{ip}' and port ='{port}';"
+        nickname = self.execute_db(sql)
+        sql = f"insert into game values ('{port}', '{nickname}', '{result});"
+        self.execute_db(sql)
+
+    def add_turn(self, port):
+        for idx, turn in enumerate(self.game_trun):
+            if port in turn:
+                self.game_trun[idx] = [port, turn+1]
+                return turn+1
 
 
 # 돌아라 돌아 ~.~

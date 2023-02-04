@@ -232,7 +232,7 @@
       </widget>
      </widget>
      <widget class="QWidget" name="page_4">
-      <widget class="QPushButton" name="yes">
+      <widget class="QPushButton" name="yes_bt">
        <property name="geometry">
         <rect>
          <x>150</x>
@@ -245,7 +245,7 @@
         <string>예</string>
        </property>
       </widget>
-      <widget class="QPushButton" name="no">
+      <widget class="QPushButton" name="no_bt">
        <property name="geometry">
         <rect>
          <x>210</x>
