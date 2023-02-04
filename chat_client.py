@@ -8,7 +8,7 @@ import time
 from tkinter.simpledialog import askstring
 
 from PyQt5 import uic
-from PyQt5.QtWidgets import QApplication, QLabel, QMessageBox, QWidget, QListWidget
+from PyQt5.QtWidgets import QApplication, QLabel, QMessageBox, QWidget
 from select import *
 from socket import *
 from tkinter import messagebox, Tk
@@ -30,7 +30,6 @@ class MainWindow(QWidget, qt_ui):
         self.constructor = ''
 
         self.chat_client = ''
-        self.sock = ''
         self.socks = []
 
         self.BUFFER = 1024
@@ -126,11 +125,14 @@ class MainWindow(QWidget, qt_ui):
 
         elif command == '/set_user_list':
             if self.Client.currentIndex() == 0:
+                print('대기방')
                 self.fill_content_in_target(self.accessor_list, content)
                 self.show_room_list()
             elif self.invitation_preparation:
+                print('채팅방')
                 self.fill_content_in_target(self.member_list, content)
             elif not self.invitation_preparation:
+                print('참여자')
                 self.fill_content_in_target(self.member_list, content)
 
         elif command == '/set_room_list':
@@ -375,6 +377,7 @@ class MainWindow(QWidget, qt_ui):
     # /set_room_list 명령문
     # 서버로부터 전달받은 채팅방 목록을 채팅방 목록 창에 출력함
     def set_room_list(self, room_list):
+        self.room_list.clear()
         for i in range(len(room_list)):
             self.room_list.insertItem(i, f'{room_list[i][1]}님의 방')
 
@@ -388,8 +391,14 @@ class MainWindow(QWidget, qt_ui):
     def open_chat_room(self, port):
         self.port = port
         self.send_command('/renew_room_list', '')
-        self.reconnect_to_server()
+        time.sleep(1)
+        self.connect_to_chat_room()
         self.move_to_chat_room()
+
+    # 서버와 연결된 소켓 정보를 초기화한 뒤 서버로부터 전달받은 채팅방 포트로 재연결
+    def connect_to_chat_room(self):
+        self.reinitialize_socket()
+        self.sock.connect((server_ip, self.port))
 
     # 환영 문구를 제거하고 위젯의 스택을 채팅방으로 옮김
     def move_to_chat_room(self):
@@ -401,6 +410,7 @@ class MainWindow(QWidget, qt_ui):
     def setup_chatroom(self):
         # 채팅창 클리어
         self.chat_list.clear()
+        self.send_command('/show_user', self.port)
         self.send_command('/load_chat', self.port)
 
     def load_recent_chat(self, content):
@@ -411,13 +421,21 @@ class MainWindow(QWidget, qt_ui):
 
         self.send_command('/show_user', self.port)
 
+    def receive_chat(self):
+        pass
+
+    def send_chat(self):
+        chat_content = self.chat.text()
+        self.send_command('/chat', chat_content)
+        self.chat.clear()
+
     def print_chat(self, content):
         self.chat_list.addItem(content)
         time.sleep(0.1)
         self.chat_list.scrollToBottom()
 
-    # def load_chat_again(self):
-    #     self.send_command('/load_chat', self.port)
+    def load_chat_again(self):
+        self.send_command('/load_chat', self.port)
 
     # 초대장 알람
     def invite_user(self, nickname):
@@ -552,13 +570,10 @@ class MainWindow(QWidget, qt_ui):
     def game_ready(self, topic):
         self.subject.setText(topic)
         self.answer.show()
-        try:
-            tk_window = Tk()
-            tk_window.geometry("0x0+3000+6000")
-            messagebox.showinfo('안내창', '게임을 시작합니다.')
-            tk_window.destroy()
-        except RuntimeError:
-            pass
+        tk_window = Tk()
+        tk_window.geometry("0x0+3000+6000")
+        messagebox.showinfo('안내창', '게임을 시작합니다.')
+        tk_window.destroy()
 
     # 질문순서면 질문창 활성화
     def question_client(self):
@@ -596,6 +611,7 @@ class MainWindow(QWidget, qt_ui):
         self.yes_bt.setDisabled(True)
         self.no_bt.setDisabled(True)
 
+    # 정답 보내기
     def to_answer(self):
         answer = self.answer.text()
         self.answer.clear()
