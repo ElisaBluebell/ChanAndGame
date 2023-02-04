@@ -26,6 +26,12 @@ class MainServer:
         self.port = 9000
         # 스무고개 턴수
         self.game_over = 20
+        # 게임 참가자 소켓
+        self.entrant_socket = []
+        # 게임 출제자 소켓
+        self.presenter_socket = []
+        # 게임 정답 리스트
+        self.answer = []
 
         # 소켓 설정
         self.initialize_socket()
@@ -177,6 +183,19 @@ class MainServer:
     def change_user_status_logout(self, s):
         # DB상 유저 상태 변경 함수 실행
         self.set_user_status_logout(s.getpeername()[0])
+        # 연결 소실 인원이 게임 참가자 인경우 명단 삭제
+        for entrant in self.entrant_socket:
+            try:
+                if c_sock in entrant:
+                    self.game_abnormal_stop(entrant[0])
+            except:
+                continue
+        for presenter in self.presenter_socket:
+            try:
+                if c_sock in presenter:
+                    self.game_abnormal_stop(presenter[0])
+            except:
+                continue
         # 커넥션 로스트 상태 확인을 위한 출력
         print(f'클라이언트 {s.getpeername()} 접속 종료')
 
@@ -274,7 +293,7 @@ class MainServer:
             self.check_game_entrant(content, s)
 
         elif command == '/topic_selection':
-            self.set_topic(content[0], content[1])
+            self.set_topic(content[0], content[1], content[2])
 
         else:
             pass
@@ -516,27 +535,41 @@ class MainServer:
         # if len(member) < 2:
         #     self.send_command('/understaffed', '', s)
         # else:
-        self.entrant_socket = []
         presenter = random.choice(member)
         for client_socket in self.client_list:
             try:
                 for value in member:
                     if value == presenter:
                         self.send_command('/presenter', '', client_socket)
-                        self.presenter_socket = client_socket
+                        self.presenter_socket.append([port, client_socket])
                     elif value[0] in client_socket.getpeername():
                         self.send_command('/entrant', '', client_socket)
-                        self.entrant_socket.append(client_socket)
+                        self.entrant_socket.append([port, client_socket])
             except:
                 continue
         random.shuffle(self.entrant_socket)
         self.game_trun = 0
 
     # 주제 및 정답 정하기
-    def set_topic(self, topic, problem):
-        self.answer = problem
+    def set_topic(self, topic, problem, port):
+        self.answer.append([port, problem])
         for entrant in self.entrant_socket:
-            self.send_command('/topic', topic, entrant)
+            if port in entrant:
+                self.send_command('/topic', topic, entrant[1])
+
+    # 게임 비정상 종료 알람
+    def game_abnormal_stop(self, port):
+        for ans in self.answer:
+            if port in ans:
+                self.answer.remove(ans)
+        for entrant in self.entrant_socket:
+            if port in entrant:
+                self.entrant_socket.remove(entrant)
+                self.send_command('/game_abnormal_stop', '', entrant[1])
+        for presenter in self.presenter_socket:
+            if port in presenter:
+                self.presenter_socket.remove(presenter)
+                self.send_command('/game_abnormal_stop', '', presenter[1])
 
 
 # 돌아라 돌아 ~.~

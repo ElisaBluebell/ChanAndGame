@@ -14,7 +14,7 @@ from socket import *
 from tkinter import messagebox, Tk
 
 qt_ui = uic.loadUiType('main_temp.ui')[0]
-server_ip = '10.10.21.121'
+server_ip = '10.10.21.108'
 
 
 class MainWindow(QWidget, qt_ui):
@@ -37,6 +37,7 @@ class MainWindow(QWidget, qt_ui):
         self.port = 9000
         self.invitation_preparation = False
         self.game_state = False
+        self.subject.clear()
 
         self.welcome = QLabel(self)
 
@@ -155,6 +156,9 @@ class MainWindow(QWidget, qt_ui):
 
         elif command == '/topic':
             self.subject.setText(content)
+
+        elif command == '/game_abnormal_stop':
+            self.game_stop()
 
         elif command == '/load_chat_again':
             self.load_chat_again()
@@ -471,7 +475,7 @@ class MainWindow(QWidget, qt_ui):
             tk_window.geometry("0x0+3000+6000")
             problem = askstring('안내창', '문제를 입력하세요')
             tk_window.destroy()
-            self.send_command('/topic_selection', [topic, problem])
+            self.send_command('/topic_selection', [topic, problem, self.port])
 
     # 출제자 선정
     def presenter(self):
@@ -489,6 +493,23 @@ class MainWindow(QWidget, qt_ui):
         self.game_start.hide()
         self.exit.hide()
         self.question.hide()
+
+    # 게임 비정상 종료
+    def game_stop(self):
+        tk_window = Tk()
+        tk_window.geometry("0x0+3000+6000")
+        messagebox.showinfo('안내창', '인원이 나가 게임이 종료 되었습니다.')
+        tk_window.destroy()
+        self.game_end_set()
+
+    # 게임 종료 셋팅
+    def game_end_set(self):
+        self.game_stack.setCurrentIndex(0)
+        self.game_state = False
+        self.game_start.show()
+        self.exit.show()
+        self.question.show()
+        self.subject.clear()
 
 
 if __name__ == '__main__':
