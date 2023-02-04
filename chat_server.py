@@ -30,6 +30,8 @@ class MainServer:
         self.entrant_socket = []
         # 게임 출제자 소켓
         self.presenter_socket = []
+        # 게임 정답 리스트
+        self.answer = []
 
         # 소켓 설정
         self.initialize_socket()
@@ -152,6 +154,19 @@ class MainServer:
     def connection_lost(self, s, c_sock):
         # DB상 유저 상태 변경 함수 실행
         self.set_user_status_logout(s.getpeername()[0])
+        # 연결 소실 인원이 게임 참가자 인경우 명단 삭제
+        for entrant in self.entrant_socket:
+            try:
+                if c_sock in entrant:
+                    self.game_abnormal_stop(entrant[0])
+            except:
+                continue
+        for presenter in self.presenter_socket:
+            try:
+                if c_sock in presenter:
+                    self.game_abnormal_stop(presenter[0])
+            except:
+                continue
         # 커넥션 로스트 상태 확인을 위한 출력
         print(f'클라이언트 {s.getpeername()} 접속 종료')
 
@@ -160,22 +175,6 @@ class MainServer:
         # 소켓 리스트에서 삭제
         self.client_list.remove(s)
         self.chat_list.remove(s)
-
-        # 연결 소실 인원이 게임 참가자 인경우 명단 삭제
-        for entrant in self.entrant_socket:
-            try:
-                if c_sock in entrant:
-                    self.entrant_socket.remove(entrant)
-                    self.game_abnormal_stop(entrant[0])
-            except:
-                continue
-        for presenter in self.presenter_socket:
-            try:
-                if c_sock in presenter:
-                    self.presenter_socket.remove(presenter)
-                    self.game_abnormal_stop(presenter[0])
-            except:
-                continue
 
         time.sleep(1)
         self.renew_user_list(c_sock)
@@ -535,18 +534,23 @@ class MainServer:
 
     # 주제 및 정답 정하기
     def set_topic(self, topic, problem, port):
-        self.answer = problem
+        self.answer.append([port, problem])
         for entrant in self.entrant_socket:
             if port in entrant:
                 self.send_command('/topic', topic, entrant[1])
 
     # 게임 비정상 종료 알람
     def game_abnormal_stop(self, port):
+        for ans in self.answer:
+            if port in ans:
+                self.answer.remove(ans)
         for entrant in self.entrant_socket:
             if port in entrant:
+                self.entrant_socket.remove(entrant)
                 self.send_command('/game_abnormal_stop', '', entrant[1])
         for presenter in self.presenter_socket:
             if port in presenter:
+                self.presenter_socket.remove(presenter)
                 self.send_command('/game_abnormal_stop', '', presenter[1])
 
 
