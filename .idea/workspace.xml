@@ -185,13 +185,6 @@
       <option name="presentableId" value="Default" />
       <updated>1675049941553</updated>
     </task>
-    <task id="LOCAL-00032" summary="230201 ElisaBluebell">
-      <created>1675218609444</created>
-      <option name="number" value="00032" />
-      <option name="presentableId" value="LOCAL-00032" />
-      <option name="project" value="LOCAL" />
-      <updated>1675218609445</updated>
-    </task>
     <task id="LOCAL-00033" summary="230201 ElisaBluebell">
       <created>1675223096796</created>
       <option name="number" value="00033" />
@@ -528,7 +521,14 @@
       <option name="project" value="LOCAL" />
       <updated>1675498402893</updated>
     </task>
-    <option name="localTasksCounter" value="81" />
+    <task id="LOCAL-00081" summary="230203 게임 기능 데모_1">
+      <created>1675498640266</created>
+      <option name="number" value="00081" />
+      <option name="presentableId" value="LOCAL-00081" />
+      <option name="project" value="LOCAL" />
+      <updated>1675498640266</updated>
+    </task>
+    <option name="localTasksCounter" value="82" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">

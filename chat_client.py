@@ -14,7 +14,7 @@ from socket import *
 from tkinter import messagebox, Tk
 
 qt_ui = uic.loadUiType('main_temp.ui')[0]
-server_ip = '10.10.21.108'
+server_ip = '10.10.21.121'
 
 
 class MainWindow(QWidget, qt_ui):
@@ -560,10 +560,13 @@ class MainWindow(QWidget, qt_ui):
     def game_ready(self, topic):
         self.subject.setText(topic)
         self.answer.show()
-        tk_window = Tk()
-        tk_window.geometry("0x0+3000+6000")
-        messagebox.showinfo('안내창', '게임을 시작합니다.')
-        tk_window.destroy()
+        try:
+            tk_window = Tk()
+            tk_window.geometry("0x0+3000+6000")
+            messagebox.showinfo('안내창', '게임을 시작합니다.')
+            tk_window.destroy()
+        except RuntimeError:
+            pass
 
     # 질문순서면 질문창 활성화
     def question_client(self):
