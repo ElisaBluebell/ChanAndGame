@@ -7,6 +7,7 @@
     <list default="true" id="12a35f88-34b3-481c-9af1-3bacfbe34dfa" name="Changes" comment="230204 ElisaBluebell">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/chat_client.py" beforeDir="false" afterPath="$PROJECT_DIR$/chat_client.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/chat_server.py" beforeDir="false" afterPath="$PROJECT_DIR$/chat_server.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -183,13 +184,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1675049941553</updated>
-    </task>
-    <task id="LOCAL-00036" summary="230201 ElisaBluebell">
-      <created>1675229325265</created>
-      <option name="number" value="00036" />
-      <option name="presentableId" value="LOCAL-00036" />
-      <option name="project" value="LOCAL" />
-      <updated>1675229325265</updated>
     </task>
     <task id="LOCAL-00037" summary="230201 ElisaBluebell">
       <created>1675234107212</created>
@@ -527,7 +521,14 @@
       <option name="project" value="LOCAL" />
       <updated>1675502128937</updated>
     </task>
-    <option name="localTasksCounter" value="85" />
+    <task id="LOCAL-00085" summary="230204 ElisaBluebell">
+      <created>1675505351566</created>
+      <option name="number" value="00085" />
+      <option name="presentableId" value="LOCAL-00085" />
+      <option name="project" value="LOCAL" />
+      <updated>1675505351566</updated>
+    </task>
+    <option name="localTasksCounter" value="86" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -558,7 +559,8 @@
     <MESSAGE value="230203 게임 기능 데모" />
     <MESSAGE value="230203 게임 기능 데모_1" />
     <MESSAGE value="230203 게임 기능 데모_game_ready_RuntimeError" />
-    <option name="LAST_COMMIT_MESSAGE" value="230203 게임 기능 데모_game_ready_RuntimeError" />
+    <MESSAGE value="230204 ElisaBluebell" />
+    <option name="LAST_COMMIT_MESSAGE" value="230204 ElisaBluebell" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

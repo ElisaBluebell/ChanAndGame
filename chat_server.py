@@ -85,7 +85,7 @@ class MainServer:
     def receive_command(self):
         while True:
             # 읽기, 쓰기, 오류 소켓 리스트를 넌블로킹 모드로 선언
-            r_sock, dummy1, dummy2 = select.select(self.client_list, [], [], 500)
+            r_sock, dummy1, dummy2 = select.select(self.client_list, [], [], 0)
             for s in r_sock:
                 if s in self.server_list:
                     # 접속받은 소켓과 주소 설정

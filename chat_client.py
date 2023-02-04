@@ -102,6 +102,7 @@ class MainWindow(QWidget, qt_ui):
                             message = eval(self.sock.recv(self.BUFFER).decode())
                             print(f'받은 메시지: {message} [{datetime.datetime.now()}]')
                             self.command_processor(message[0], message[1])
+
     def send_command(self, command, content):
         data = json.dumps([command, content], )
         print(f'보낸 메시지: {data} [{datetime.datetime.now()}]')
