@@ -73,7 +73,7 @@ class MainServer:
     def receive_command(self):
         while True:
             # 읽기, 쓰기, 오류 소켓 리스트를 넌블로킹 모드로 선언
-            r_sock, w_sock, e_sock = select.select(self.client_list, [], [], 2)
+            r_sock, w_sock, e_sock = select.select(self.client_list, [], [], 500)
             for s in r_sock:
                 if s in self.server_list:
                     # 접속받은 소켓과 주소 설정
@@ -90,10 +90,15 @@ class MainServer:
 
                         # 실제 데이터를 수신한 경우
                         if data:
-                            # 데이터 자료형 복원
-                            message = eval(data)
-                            # 명령 실행 함수로 이동(송신자와, 데이터를 가지고)
-                            self.command_processor(s.getpeername()[0], message, s)
+                            try:
+                                # 데이터 자료형 복원
+                                message = eval(data)
+                                # 명령 실행 함수로 이동(송신자와, 데이터를 가지고)
+                                self.command_processor(s.getpeername()[0], message, s)
+
+                            except TypeError:
+                                data = json.dumps(['/load_chat_again', ''])
+                                s.send(data.encode())
 
                         # 유언을 받은 경우
                         if not data:
@@ -108,7 +113,7 @@ class MainServer:
     # 클라이언트 소켓 접속시 행해지는 기본설정들
     def set_client(self, c_sock, addr, s):
         self.renew_user_list(s)
-        time.sleep(0.5)
+        time.sleep(1)
         # 클라이언트 소켓을 소켓 리스트에 추가함
         self.client_list.append(c_sock)
         self.chat_list.append(c_sock)
@@ -172,9 +177,8 @@ class MainServer:
             except:
                 continue
 
-        time.sleep(0.5)
+        time.sleep(1)
         self.renew_user_list(c_sock)
-
 
     # 접속 종료한 유저의 IP를 매개로 포트 번호 초기화
     def set_user_status_logout(self, ip):
@@ -317,6 +321,7 @@ class MainServer:
     # /show_user 명령문
     # DB에서 해당 채팅방에 접속한 유저 리스트를 불러와 클라이언트에 유저 리스트 출력 명령과 함께 전송
     def show_user(self, port, s):
+        self.send_command('', '', s)
         chat_user_list = self.get_single_item_list('닉네임', 'state', 'port', port)
         chat_user_list = self.array_list(chat_user_list)
         self.send_command('/set_user_list', chat_user_list, s)
