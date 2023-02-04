@@ -95,7 +95,7 @@ class MainWindow(QWidget, qt_ui):
     def get_message(self):
         while True:
             if self.thread_switch == 1:
-                r_sock, dummy1, dummy2 = select(self.socks, [], [], 500)
+                r_sock, dummy1, dummy2 = select(self.socks, [], [], 0)
                 if r_sock:
                     for s in r_sock:
                         if s == self.sock:

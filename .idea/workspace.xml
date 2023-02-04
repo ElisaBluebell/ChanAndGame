@@ -52,7 +52,7 @@
     ]
   }
 }</component>
-  <component name="RunManager" selected="Python.chat_server">
+  <component name="RunManager" selected="Python.chat_client">
     <configuration name="chat_client" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="ChanAndGame" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -167,8 +167,8 @@
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.chat_server" />
         <item itemvalue="Python.chat_client" />
+        <item itemvalue="Python.chat_server" />
         <item itemvalue="Python.test" />
         <item itemvalue="Python.new" />
         <item itemvalue="Python.jy_chat_client" />
