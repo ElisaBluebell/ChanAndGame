@@ -100,9 +100,13 @@ class MainWindow(QWidget, qt_ui):
                 if r_sock:
                     for s in r_sock:
                         if s == self.sock:
-                            message = eval(self.sock.recv(self.BUFFER).decode())
-                            print(f'받은 메시지: {message} [{datetime.datetime.now()}]')
-                            self.command_processor(message[0], message[1])
+                            try:
+                                message = eval(self.sock.recv(self.BUFFER).decode())
+                                print(f'받은 메시지: {message} [{datetime.datetime.now()}]')
+                                self.command_processor(message[0], message[1])
+
+                            except SyntaxError:
+                                pass
 
     def send_command(self, command, content):
         data = json.dumps([command, content], )

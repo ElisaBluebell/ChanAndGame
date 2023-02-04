@@ -5,9 +5,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="12a35f88-34b3-481c-9af1-3bacfbe34dfa" name="Changes" comment="230203 ElisaBluebell">
+      <change beforePath="$PROJECT_DIR$/.idea/ChanAndGame.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/ChanAndGame.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/chat_client.py" beforeDir="false" afterPath="$PROJECT_DIR$/chat_client.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/chat_server.py" beforeDir="false" afterPath="$PROJECT_DIR$/chat_server.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -160,11 +161,11 @@
       <method v="2" />
     </configuration>
     <list>
-      <item itemvalue="Python.test" />
-      <item itemvalue="Python.new" />
-      <item itemvalue="Python.jy_chat_client" />
       <item itemvalue="Python.chat_client" />
       <item itemvalue="Python.chat_server" />
+      <item itemvalue="Python.jy_chat_client" />
+      <item itemvalue="Python.new" />
+      <item itemvalue="Python.test" />
     </list>
     <recent_temporary>
       <list>
