@@ -546,7 +546,7 @@ class MainWindow(QWidget, qt_ui):
         self.game_stack.setCurrentIndex(0)
         self.game_state = False
         self.game_start.show()
-        self.exit.hide()
+        self.exit.show()
         self.question.clear()
         self.question.hide()
         self.subject.clear()
@@ -567,6 +567,7 @@ class MainWindow(QWidget, qt_ui):
 
     # 질문순서면 질문창 활성화
     def question_client(self):
+        print('질문창 활성화')
         self.question.show()
 
     # 질문하기
