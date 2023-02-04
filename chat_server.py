@@ -3,12 +3,12 @@ import json
 import pymysql
 import socket
 import select
-import time
 import random
+
 
 class MainServer:
 
-    # 초기 세팅
+    # 초기 설정
 
     def __init__(self):
         # 소켓 리스트
@@ -34,6 +34,15 @@ class MainServer:
 
     # 소켓 설정 함수
     def initialize_socket(self):
+        self.socket_default_setting()
+        self.append_socket_list()
+
+        # 채팅 소켓 초기 설정 함수 호출, 9001번 포트부터 9100번 포트까지 사용
+        self.initialize_chat_socket(9001, 9101)
+        # 포트 번호를 알림
+        print(f'접속 대기중 {self.port}...')
+
+    def socket_default_setting(self):
         # 주소 재사용 오류 방지 옵션 부여
         self.s_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         # 소켓 주소 설정
@@ -41,35 +50,36 @@ class MainServer:
         # 오픈
         self.s_sock.listen()
 
+    def append_socket_list(self):
         # 소켓 리스트와 서버 소켓 리스트에 서버 소켓 추가
         self.client_list.append(self.s_sock)
         self.server_list.append(self.s_sock)
-        # 채팅 소켓 초기 설정 함수 호출
-        self.initialize_chat_socket()
-        # 포트 번호를 알림
-        print(f'접속 대기중 {self.port}...')
 
     # 채팅 소켓 설정 함수
-    def initialize_chat_socket(self):
-        # 9001번 포트부터 9100번 포트까지 사용
-        for i in range(9001, 9101):
-            # 각각의 포트를 반복문을 활용해 소켓 객체로 선언
-            globals()['port' + str(i)] = socket.socket()
+    def initialize_chat_socket(self, start, end):
+        for i in range(start, end):
+            self.chat_socket_default_setting(i)
+            self.append_chat_socket_list(i)
 
-            # 소켓 초기 설정 및 입력 대기
-            globals()['port' + str(i)].setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            globals()['port' + str(i)].bind((self.ip, i))
-            globals()['port' + str(i)].listen()
+    def chat_socket_default_setting(self, number):
+        # 각각의 포트를 반복문을 활용해 소켓 객체로 선언
+        globals()['port' + str(number)] = socket.socket()
 
-            # 소켓 리스트와 서버 소켓 리스트에 반복생성한 함수 추가
-            self.client_list.append(globals()['port' + str(i)])
-            self.server_list.append(globals()['port' + str(i)])
+        # 소켓 초기 설정 및 입력 대기
+        globals()['port' + str(number)].setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        globals()['port' + str(number)].bind((self.ip, number))
+        globals()['port' + str(number)].listen()
+
+    def append_chat_socket_list(self, number):
+        # 소켓 리스트와 서버 소켓 리스트에 반복생성한 함수 추가
+        self.client_list.append(globals()['port' + str(number)])
+        self.server_list.append(globals()['port' + str(number)])
 
     # 명령문 받기 함수
     def receive_command(self):
         while True:
             # 읽기, 쓰기, 오류 소켓 리스트를 넌블로킹 모드로 선언
-            r_sock, w_sock, e_sock = select.select(self.client_list, [], [], 500)
+            r_sock, dummy1, dummy2 = select.select(self.client_list, [], [], 0)
             for s in r_sock:
                 if s in self.server_list:
                     # 접속받은 소켓과 주소 설정
@@ -79,18 +89,13 @@ class MainServer:
 
                 else:
                     try:
-                        # 받아온 바이트 데이터를 디코딩
-                        data = s.recv(self.BUFFER).decode('utf-8')
-                        # 송신자와 데이터 확인을 위해 콘솔창 출력
-                        print(f'받은 메시지> {s.getpeername()}: {data} [{datetime.datetime.now()}]')
+                        data = self.print_and_decode_data(s)
 
                         # 실제 데이터를 수신한 경우
                         if data:
                             try:
-                                # 데이터 자료형 복원
-                                message = eval(data)
                                 # 명령 실행 함수로 이동(송신자와, 데이터를 가지고)
-                                self.command_processor(s.getpeername()[0], message, s)
+                                self.command_processor(s.getpeername()[0], eval(data), s)
 
                             except TypeError:
                                 data = json.dumps(['/load_chat_again', ''])
@@ -107,16 +112,28 @@ class MainServer:
                         continue
 
     # 클라이언트 소켓 접속시 행해지는 기본설정들
-    def set_client(self, c_sock, addr, s):
-        self.renew_user_list(s)
-        time.sleep(1)
+    def set_client(self, sock, address, server):
+        self.renew_user_list(server)
         # 클라이언트 소켓을 소켓 리스트에 추가함
-        self.client_list.append(c_sock)
-        self.chat_list.append(c_sock)
+        self.client_list.append(sock)
+        self.chat_list.append(sock)
         # 해당 주소의 접속을 콘솔에 출력
-        print(f'클라이언트 {addr} 접속')
+        print(f'클라이언트 {address} 접속')
         # 클라이언트의 초기 설정 요청
-        self.set_client_default(c_sock, addr[0], s.getsockname()[1])
+        self.set_client_default(sock, address[0], server.getsockname()[1])
+
+    def renew_user_list(self, s):
+        same_port_user = self.select_same_port_user(s)
+        for sock in same_port_user:
+            self.send_command('/show_user_list', '', sock)
+
+    def select_same_port_user(self, s):
+        same_port_user = []
+        for sock in self.chat_list:
+            if sock.getsockname()[1] == s.getsockname()[1]:
+                same_port_user.append(sock)
+
+        return same_port_user
 
     def set_client_default(self, c_sock, ip, port):
         # 접속한 유저의 DB상 포트 번호를 현재 접속한 포트 번호로 변경
@@ -144,26 +161,36 @@ class MainServer:
         # 정상적으로 등록된 닉네임이 있을 경우 닉네임 설정 완료 전송
         self.send_command('/set_nickname_complete', nickname, c_sock)
 
+    def print_and_decode_data(self, server):
+        # 받아온 바이트 데이터를 디코딩
+        data = server.recv(self.BUFFER).decode('utf-8')
+        # 송신자와 데이터 확인을 위해 콘솔창 출력
+        print(f'받은 메시지: {server.getpeername()}: {data} [{datetime.datetime.now()}]')
+        return data
+
     # 연결 소실시 행해지는 작업
     def connection_lost(self, s, c_sock):
+        self.change_user_status_logout(s)
+        self.deactivate_socket(s)
+        self.renew_user_list(c_sock)
+
+    def change_user_status_logout(self, s):
         # DB상 유저 상태 변경 함수 실행
         self.set_user_status_logout(s.getpeername()[0])
         # 커넥션 로스트 상태 확인을 위한 출력
         print(f'클라이언트 {s.getpeername()} 접속 종료')
 
+    # 접속 종료한 유저의 IP를 매개로 포트 번호 초기화
+    def set_user_status_logout(self, ip):
+        sql = f'UPDATE state SET port=0 WHERE ip="{ip}"'
+        self.execute_db(sql)
+
+    def deactivate_socket(self, s):
         # 해당 커넥션 소켓 닫음
         s.close()
         # 소켓 리스트에서 삭제
         self.client_list.remove(s)
         self.chat_list.remove(s)
-
-        time.sleep(1)
-        self.renew_user_list(c_sock)
-
-    # 접속 종료한 유저의 IP를 매개로 포트 번호 초기화
-    def set_user_status_logout(self, ip):
-        sql = f'UPDATE state SET port=0 WHERE ip="{ip}"'
-        self.execute_db(sql)
 
     # 명령문 전송
     def send_command(self, command, content, s):
@@ -171,10 +198,14 @@ class MainServer:
         if self.past_message == message:
             pass
         else:
-            data = json.dumps([command, content])
-            print(f'보낸 메시지: {data} [{datetime.datetime.now()}]')
-            s.send(data.encode())
+            self.send_process(command, content, s)
             self.past_message = message
+
+    @staticmethod
+    def send_process(command, content, s):
+        data = json.dumps([command, content])
+        print(f'보낸 메시지: {data} [{datetime.datetime.now()}]')
+        s.send(data.encode())
 
     # DB 작업
     @staticmethod
@@ -192,10 +223,6 @@ class MainServer:
 
         # 결과 반환
         return c.fetchall()
-
-    # 초기 설정 종료
-
-    # 이하 명령문 송수신
 
     # 명령문 커넥션
     def command_processor(self, user_ip, message, s):
@@ -220,7 +247,7 @@ class MainServer:
             self.make_chat_room(user_ip, content, s)
 
         elif command == '/request_port':
-            self.give_port(content, s)
+            self.request_port(content, s)
 
         elif command == '/load_chat':
             self.load_chat(content, s)
@@ -252,14 +279,17 @@ class MainServer:
         else:
             pass
 
+    """
+    초기 설정 종료
+    이하 명령문 송수신
+    """
+
     # /setup_nickname 명령문
     def setup_nickname(self, user_ip, nickname, s):
         # 유저 IP에 해당하는 닉네임과 상태 정보 삭제
         self.delete_nickname_from_database(user_ip)
-
         # 유저 IP에 해당하는 닉네임과 상태 정보 생성
         self.create_nickname_in_database(user_ip, nickname)
-
         # 닉네임 세팅 종료를 알리는 메세지 설정 및 전송
         self.send_command('/set_nickname_complete', nickname, s)
 
@@ -293,18 +323,17 @@ class MainServer:
         if checker == 0:
             self.send_command('/setup_nickname', nickname, s)
 
+    # /show_user 명령문
+    # 접속한 유저 리스트를 불러와 클라이언트에 유저 리스트 출력 명령과 함께 전송
+    def show_user(self, port, s):
+        chat_user_list = self.get_single_item_list('닉네임', 'state', 'port', port)
+        chat_user_list = self.array_list(chat_user_list)
+        self.send_command('/set_user_list', chat_user_list, s)
+
     def get_single_item_list(self, item, table, key_column, key):
         sql = f'SELECT {item} FROM {table} WHERE {key_column}={key};'
         temp = self.execute_db(sql)
         return temp
-
-    # /show_user 명령문
-    # DB에서 해당 채팅방에 접속한 유저 리스트를 불러와 클라이언트에 유저 리스트 출력 명령과 함께 전송
-    def show_user(self, port, s):
-        self.send_command('', '', s)
-        chat_user_list = self.get_single_item_list('닉네임', 'state', 'port', port)
-        chat_user_list = self.array_list(chat_user_list)
-        self.send_command('/set_user_list', chat_user_list, s)
 
     # 반복문을 활용해 인수로 받은 유저 정보를 리스트로 만들어 반환
     @staticmethod
@@ -345,13 +374,7 @@ class MainServer:
 
         # 해당 유저가 방을 개설하지 않았을 경우
         else:
-            # 빈 방 번호와 부여할 포트 번호 체크, 방 번호는 1번부터 100번까지, 포트 번호는 9001번부터 9100번까지 사용
-            empty_port = self.empty_number_checker('port', 9001, 9101)
-
-            # 채팅방 DB를 만들고
-            self.make_chat_room_db(nickname, empty_port)
-            # 해당 채팅방 개설과 관련된 작업을 클라이언트에게 지시
-            self.send_command('/open_chat_room', empty_port, s)
+            self.create_chat_room(nickname, s)
 
     # 생성자 IP 정보를 DB에서 받아와서 현재 접속 IP와 대조함, 일치시 1, 일치하는 값 없을 시 0 반환
     def check_have_room(self, user_ip):
@@ -362,6 +385,15 @@ class MainServer:
             if user_ip == room_maker[0]:
                 return 1
         return 0
+
+    def create_chat_room(self, nickname, s):
+        # 빈 방 번호와 부여할 포트 번호 체크, 방 번호는 1번부터 100번까지, 포트 번호는 9001번부터 9100번까지 사용
+        empty_port = self.empty_number_checker('port', 9001, 9101)
+
+        # 채팅방 DB를 만들고
+        self.make_chat_room_db(nickname, empty_port)
+        # 해당 채팅방 개설과 관련된 작업을 클라이언트에게 지시
+        self.send_command('/open_chat_room', empty_port, s)
 
     # 빈 숫자 확인을 위한 함수, 매개변수(칼럼명, 시작값, 종료값)
     def empty_number_checker(self, item, start, end):
@@ -390,9 +422,9 @@ class MainServer:
         "{socket.gethostbyname(socket.gethostname())}", "{empty_port}");'''
         self.execute_db(sql)
 
-    # /give_port 명령문
+    # /request_port 명령문
     # DB에 기록된 채팅방의 생성자 IP를 매개로 채팅방의 포트 번호를 불러와 클라이언트에게 전달
-    def give_port(self, nickname, s):
+    def request_port(self, nickname, s):
         sql = f'SELECT port FROM chat WHERE 생성자=(SELECT ip FROM state WHERE 닉네임="{nickname}")'
         port = self.execute_db(sql)[0][0]
 
@@ -405,7 +437,7 @@ class MainServer:
         recent_chat = []
 
         try:
-            sql = f'SELECT * FROM chat WHERE port={chat_port} ORDER BY 시간 LIMIT 10;'
+            sql = f'SELECT * FROM chat WHERE port={chat_port} ORDER BY 시간 DESC LIMIT 10;'
             temp = self.execute_db(sql)
             # 0=방번호, 1=닉네임, 2시간, 3=채팅내용, 4=생성자, 5=포트 // 시간 닉네임 생성자 순으로 정렬
             for i in range(len(temp)):
@@ -421,7 +453,7 @@ class MainServer:
 
     def chat_process(self, user, chat, s):
         room_creator = self.seek_room_creator(s)
-        # self.insert_chat_in_db(user, chat, room_creator, s)
+        self.insert_chat_in_db(user, chat, room_creator, s)
         self.fire_the_chat(user, chat, s)
 
     def seek_room_creator(self, s):
@@ -450,24 +482,10 @@ class MainServer:
         sql = f'SELECT 닉네임 FROM state WHERE ip="{user}"'
         return self.execute_db(sql)[0][0]
 
-    def select_same_port_user(self, s):
-        same_port_user = []
-        for sock in self.chat_list:
-            if sock.getsockname()[1] == s.getsockname()[1]:
-                same_port_user.append(sock)
-
-        return same_port_user
-
     def renew_room_list(self, s):
         same_port_user = self.select_same_port_user(s)
         for sock in same_port_user:
             self.get_room_list(sock)
-
-    def renew_user_list(self, s):
-        same_port_user = self.select_same_port_user(s)
-        for sock in same_port_user:
-            self.send_command('/show_user_list', '', sock)
-
 
     # 채팅창에서 참가자 및 초대 가능한 사람 보여주기
     def get_member_list(self, state, port, s):
