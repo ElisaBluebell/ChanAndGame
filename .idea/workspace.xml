@@ -185,13 +185,6 @@
       <option name="presentableId" value="Default" />
       <updated>1675049941553</updated>
     </task>
-    <task id="LOCAL-00030" summary="230201 ElisaBluebell">
-      <created>1675212984698</created>
-      <option name="number" value="00030" />
-      <option name="presentableId" value="LOCAL-00030" />
-      <option name="project" value="LOCAL" />
-      <updated>1675212984698</updated>
-    </task>
     <task id="LOCAL-00031" summary="230201 ElisaBluebell">
       <created>1675214769106</created>
       <option name="number" value="00031" />
@@ -528,7 +521,14 @@
       <option name="project" value="LOCAL" />
       <updated>1675484625779</updated>
     </task>
-    <option name="localTasksCounter" value="79" />
+    <task id="LOCAL-00079" summary="230203 게임 기능 데모">
+      <created>1675497422031</created>
+      <option name="number" value="00079" />
+      <option name="presentableId" value="LOCAL-00079" />
+      <option name="project" value="LOCAL" />
+      <updated>1675497422031</updated>
+    </task>
+    <option name="localTasksCounter" value="80" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -556,7 +556,8 @@
     <MESSAGE value="230203 ElisaBluebell" />
     <MESSAGE value="230203 게임 기능 하는중" />
     <MESSAGE value="230203 게임 비정상 종료 기능 추가" />
-    <option name="LAST_COMMIT_MESSAGE" value="230203 게임 비정상 종료 기능 추가" />
+    <MESSAGE value="230203 게임 기능 데모" />
+    <option name="LAST_COMMIT_MESSAGE" value="230203 게임 기능 데모" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
