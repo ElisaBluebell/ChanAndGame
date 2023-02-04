@@ -7,6 +7,7 @@
     <list default="true" id="12a35f88-34b3-481c-9af1-3bacfbe34dfa" name="Changes" comment="230204 ElisaBluebell">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/chat_client.py" beforeDir="false" afterPath="$PROJECT_DIR$/chat_client.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/chat_server.py" beforeDir="false" afterPath="$PROJECT_DIR$/chat_server.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -52,7 +53,7 @@
     ]
   }
 }</component>
-  <component name="RunManager" selected="Python.chat_server">
+  <component name="RunManager" selected="Python.chat_client">
     <configuration name="chat_client" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="ChanAndGame" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -167,8 +168,8 @@
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.chat_server" />
         <item itemvalue="Python.chat_client" />
+        <item itemvalue="Python.chat_server" />
         <item itemvalue="Python.test" />
         <item itemvalue="Python.new" />
         <item itemvalue="Python.jy_chat_client" />
@@ -183,13 +184,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1675049941553</updated>
-    </task>
-    <task id="LOCAL-00034" summary="230201 ElisaBluebell">
-      <created>1675228765852</created>
-      <option name="number" value="00034" />
-      <option name="presentableId" value="LOCAL-00034" />
-      <option name="project" value="LOCAL" />
-      <updated>1675228765852</updated>
     </task>
     <task id="LOCAL-00035" summary="230201 ElisaBluebell">
       <created>1675228980447</created>
@@ -527,7 +521,14 @@
       <option name="project" value="LOCAL" />
       <updated>1675499155159</updated>
     </task>
-    <option name="localTasksCounter" value="83" />
+    <task id="LOCAL-00083" summary="230204 ElisaBluebell">
+      <created>1675502301451</created>
+      <option name="number" value="00083" />
+      <option name="presentableId" value="LOCAL-00083" />
+      <option name="project" value="LOCAL" />
+      <updated>1675502301451</updated>
+    </task>
+    <option name="localTasksCounter" value="84" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -558,7 +559,8 @@
     <MESSAGE value="230203 게임 기능 데모" />
     <MESSAGE value="230203 게임 기능 데모_1" />
     <MESSAGE value="230203 게임 기능 데모_game_ready_RuntimeError" />
-    <option name="LAST_COMMIT_MESSAGE" value="230203 게임 기능 데모_game_ready_RuntimeError" />
+    <MESSAGE value="230204 ElisaBluebell" />
+    <option name="LAST_COMMIT_MESSAGE" value="230204 ElisaBluebell" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

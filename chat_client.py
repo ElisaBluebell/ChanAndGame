@@ -30,7 +30,6 @@ class MainWindow(QWidget, qt_ui):
         self.constructor = ''
 
         self.chat_client = ''
-        self.sock = ''
         self.socks = []
 
         self.BUFFER = 1024
@@ -96,18 +95,13 @@ class MainWindow(QWidget, qt_ui):
     def get_message(self):
         while True:
             if self.thread_switch == 1:
-                r_sock, dummy1, dummy2 = select(self.socks, [], [], 0)
+                r_sock, dummy1, dummy2 = select(self.socks, [], [], 500)
                 if r_sock:
                     for s in r_sock:
                         if s == self.sock:
-                            try:
-                                message = eval(self.sock.recv(self.BUFFER).decode())
-                                print(f'받은 메시지: {message} [{datetime.datetime.now()}]')
-                                self.command_processor(message[0], message[1])
-
-                            except SyntaxError:
-                                pass
-
+                            message = eval(self.sock.recv(self.BUFFER).decode())
+                            print(f'받은 메시지: {message} [{datetime.datetime.now()}]')
+                            self.command_processor(message[0], message[1])
     def send_command(self, command, content):
         data = json.dumps([command, content], )
         print(f'보낸 메시지: {data} [{datetime.datetime.now()}]')
@@ -387,7 +381,6 @@ class MainWindow(QWidget, qt_ui):
     # 소켓 커넥션을 채팅방으로 변경하고 채팅방 페이지를 출력
     def open_chat_room(self, port):
         self.port = port
-        self.send_command('/renew_room_list', '')
         self.reconnect_to_server()
         self.move_to_chat_room()
 
