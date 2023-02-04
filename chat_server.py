@@ -136,6 +136,7 @@ class MainServer:
     def select_same_port_user(self, s):
         same_port_user = []
         for sock in self.chat_list:
+            print(self.chat_list)
             if sock.getsockname()[1] == s.getsockname()[1]:
                 same_port_user.append(sock)
 
@@ -224,7 +225,7 @@ class MainServer:
     @staticmethod
     def send_process(command, content, s):
         data = json.dumps([command, content])
-        print(f'보낸 메시지: {data} [{datetime.datetime.now()}]')
+        print(f'보낸 메시지: {data} [{datetime.datetime.now()}]{s}')
         s.send(data.encode())
 
     # DB 작업
