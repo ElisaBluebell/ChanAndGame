@@ -82,7 +82,7 @@ class MainServer:
     def receive_command(self):
         while True:
             # 읽기, 쓰기, 오류 소켓 리스트를 넌블로킹 모드로 선언
-            r_sock, w_sock, e_sock = select.select(self.client_list, [], [], 500)
+            r_sock, w_sock, e_sock = select.select(self.client_list, [], [], 0)
             for s in r_sock:
                 if s in self.server_list:
                     # 접속받은 소켓과 주소 설정
@@ -342,7 +342,7 @@ class MainServer:
     # /show_user 명령문
     # DB에서 해당 채팅방에 접속한 유저 리스트를 불러와 클라이언트에 유저 리스트 출력 명령과 함께 전송
     def show_user(self, port, s):
-        self.send_command('', '', s)
+        # self.send_command('', '', s)
         chat_user_list = self.get_single_item_list('닉네임', 'state', 'port', port)
         chat_user_list = self.array_list(chat_user_list)
         self.send_command('/set_user_list', chat_user_list, s)
@@ -538,23 +538,27 @@ class MainServer:
         sql = f"select ip, 닉네임 from state where port = '{port}';"
         member = self.execute_db(sql)
         participant = []
+        print(self.chat_list)
         if len(member) < 2:
             self.send_command('/understaffed', '', s)
         else:
             presenter = random.choice(member)
-            for client_socket in self.client_list:
+            for client_socket in self.chat_list:
                 try:
+                    print('선택')
                     for value in member:
                         if value == presenter:
                             self.send_command('/presenter', '', client_socket)
                             self.presenter_socket.append([port, client_socket])
-                        elif value[0] in client_socket.getpeername():
+                            break
+                        else:
                             self.send_command('/entrant', '', client_socket)
                             participant.append([port, client_socket])
-                    random.shuffle(participant)
-                    self.entrant_socket.append(participant)
+                            break
                 except:
-                    continue
+                    pass
+            random.shuffle(participant)
+            self.entrant_socket.append(participant)
             self.game_trun.append([port, 0])
 
     # 주제 및 정답 정하기
