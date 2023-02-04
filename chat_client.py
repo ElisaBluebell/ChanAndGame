@@ -14,7 +14,7 @@ from socket import *
 from tkinter import messagebox, Tk
 
 qt_ui = uic.loadUiType('main_temp.ui')[0]
-server_ip = '10.10.21.108'
+server_ip = '10.10.21.121'
 
 
 class MainWindow(QWidget, qt_ui):

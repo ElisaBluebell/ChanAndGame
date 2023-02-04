@@ -4,9 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="12a35f88-34b3-481c-9af1-3bacfbe34dfa" name="Changes" comment="230203 ElisaBluebell">
-      <change beforePath="$PROJECT_DIR$/.idea/ChanAndGame.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/ChanAndGame.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+    <list default="true" id="12a35f88-34b3-481c-9af1-3bacfbe34dfa" name="Changes" comment="230204 ElisaBluebell">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/chat_client.py" beforeDir="false" afterPath="$PROJECT_DIR$/chat_client.py" afterDir="false" />
     </list>
@@ -54,7 +52,7 @@
     ]
   }
 }</component>
-  <component name="RunManager" selected="Python.chat_client">
+  <component name="RunManager" selected="Python.chat_server">
     <configuration name="chat_client" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="ChanAndGame" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -169,8 +167,8 @@
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.chat_client" />
         <item itemvalue="Python.chat_server" />
+        <item itemvalue="Python.chat_client" />
         <item itemvalue="Python.test" />
         <item itemvalue="Python.new" />
         <item itemvalue="Python.jy_chat_client" />
