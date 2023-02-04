@@ -14,7 +14,7 @@ from socket import *
 from tkinter import messagebox, Tk
 
 qt_ui = uic.loadUiType('main_temp.ui')[0]
-server_ip = '10.10.21.108'
+server_ip = '10.10.21.121'
 
 
 class MainWindow(QWidget, qt_ui):
@@ -388,7 +388,6 @@ class MainWindow(QWidget, qt_ui):
     def open_chat_room(self, port):
         self.port = port
         self.send_command('/renew_room_list', '')
-        time.sleep(1)
         self.reconnect_to_server()
         self.move_to_chat_room()
 
@@ -417,8 +416,8 @@ class MainWindow(QWidget, qt_ui):
         time.sleep(0.1)
         self.chat_list.scrollToBottom()
 
-    def load_chat_again(self):
-        self.send_command('/load_chat', self.port)
+    # def load_chat_again(self):
+    #     self.send_command('/load_chat', self.port)
 
     # 초대장 알람
     def invite_user(self, nickname):
