@@ -377,7 +377,7 @@ class MainServer:
     # /get_room_list 명령문
     # DB를 통해 현재 개설된 채팅방의 정보를 정리하여 클라이언트에게 전달
     def get_room_list(self, s):
-        sql = 'SELECT DISTINCT a.port, b.닉네임 FROM chat AS a INNER JOIN state AS b on a.생성자=b.ip;'
+        sql = 'SELECT DISTINCT a.port, b.닉네임 FROM chat AS a INNER JOIN state AS b on a.생성자 = b.ip;'
         temp = self.execute_db(sql)
         # 반복문을 활용해 유저 정보를 리스트로 만들어서 전송
         room_list = self.array_room_list(temp)
@@ -519,8 +519,10 @@ class MainServer:
     # 채팅창에서 참가자 및 초대 가능한 사람 보여주기
     def get_member_list(self, state, port, s):
         if state == 'True':
+            print('초대방')
             self.show_user(9000, s)
         else:
+            print('참여자')
             self.show_user(port, s)
 
     # 채팅방에 초대하기

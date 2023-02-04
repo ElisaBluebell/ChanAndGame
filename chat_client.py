@@ -14,7 +14,7 @@ from socket import *
 from tkinter import messagebox, Tk
 
 qt_ui = uic.loadUiType('main_temp.ui')[0]
-server_ip = '10.10.21.121'
+server_ip = '10.10.21.108'
 
 
 class MainWindow(QWidget, qt_ui):
@@ -126,11 +126,14 @@ class MainWindow(QWidget, qt_ui):
 
         elif command == '/set_user_list':
             if self.Client.currentIndex() == 0:
+                print('대기방')
                 self.fill_content_in_target(self.accessor_list, content)
                 self.show_room_list()
             elif self.invitation_preparation:
+                print('채팅방')
                 self.fill_content_in_target(self.member_list, content)
             elif not self.invitation_preparation:
+                print('참여자')
                 self.fill_content_in_target(self.member_list, content)
 
         elif command == '/set_room_list':
@@ -431,17 +434,6 @@ class MainWindow(QWidget, qt_ui):
             self.send_command('/refuse', '')
         tk_window.destroy()
 
-    def invite_user(self, nickname):
-        tk_window = Tk()
-        tk_window.geometry("0x0+3000+6000")
-        reply = messagebox.askquestion('초대장', f'{nickname}님이 초대장을 보냈습니다. 입장하시겠습니까?')
-        if reply == 'yes':
-            self.reset_member_button()
-            self.send_command('/request_port', nickname)
-        else:
-            self.send_command('/refuse', '')
-        tk_window.destroy()
-
     # 채팅창에서 참가자 보기 버튼 눌렸을때
     def click_member(self):
         self.invitation_preparation = False
@@ -607,6 +599,7 @@ class MainWindow(QWidget, qt_ui):
         self.yes_bt.setDisabled(True)
         self.no_bt.setDisabled(True)
 
+    # 정답 보내기
     def to_answer(self):
         answer = self.answer.text()
         self.answer.clear()
