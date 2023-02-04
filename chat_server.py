@@ -276,7 +276,7 @@ class MainServer:
             self.get_member_list(content[0], content[1], s)
 
         elif command == '/invitation':
-            self.invite( content[0], content[1])
+            self.invite(content[0], content[1])
 
         elif command == '/chat':
             self.chat_process(user_ip, content, s)
@@ -524,15 +524,18 @@ class MainServer:
             self.show_user(port, s)
 
     # 채팅방에 초대하기
-    def invite(self, name, nickname):
+    def invite(self, name, ip):
         sql = f"select ip from state where 닉네임 ='{name}';"
         invite_ip = self.execute_db(sql)[0][0]
+        sql = f"select 닉네임 from state where ip ='{ip}'"
+        nickname = self.execute_db(sql)[0][0]
         for i in self.client_list:
             try:
                 if invite_ip in i.getpeername():
                     self.send_command('/invitation', nickname, i)
                 break
             except:
+                print('ip를 찾지 못했습니다.')
                 continue
 
     # 초대 거절 메시지
@@ -605,6 +608,7 @@ class MainServer:
                 self.send_command('/show_question_list_presenter', question, presenter[1])
             break
 
+    # 답변 보여 주기
     def show_answer(self, answer, port, s):
         turn = self.add_turn(port)
         if turn < 20:
@@ -624,6 +628,7 @@ class MainServer:
         else:
             self.game_over(port, s)
 
+    # 게임 종료후 결과 기록
     def game_over(self, port, s):
         for entrant in self.entrant_socket:
             if port in entrant[0]:
@@ -654,17 +659,21 @@ class MainServer:
                 self.game_trun.remove(i)
             break
 
+    # 게임 결과 DB에 저장
     def insert_game_db(self, ip, port, result):
         sql = f"select 닉네임 from state where ip ='{ip}' and port ='{port}';"
         nickname = self.execute_db(sql)
         sql = f"insert into game values ('{port}', '{nickname}', '{result});"
         self.execute_db(sql)
 
+    # 턴 추가하기
     def add_turn(self, port):
         for idx, turn in enumerate(self.game_trun):
             if port in turn:
                 self.game_trun[idx] = [port, turn+1]
                 return turn+1
+
+    # 정답 확인 하기
     def check_answer(self, to_answer, port, s):
         answer = ''
         for i in self.answer:
@@ -675,7 +684,6 @@ class MainServer:
             self.game_over(port, s)
         else:
             self.send_command('/wrong_answer', '', s)
-        pass
 
 
 # 돌아라 돌아 ~.~

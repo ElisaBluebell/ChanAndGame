@@ -8,7 +8,7 @@ import time
 from tkinter.simpledialog import askstring
 
 from PyQt5 import uic
-from PyQt5.QtWidgets import QApplication, QLabel, QMessageBox, QWidget, QListWidget
+from PyQt5.QtWidgets import QApplication, QLabel, QMessageBox, QWidget
 from select import *
 from socket import *
 from tkinter import messagebox, Tk
@@ -427,7 +427,7 @@ class MainWindow(QWidget, qt_ui):
     def invite_user(self, nickname):
         tk_window = Tk()
         tk_window.geometry("0x0+3000+6000")
-        reply = messagebox.askquestion('초대장', f'{nickname}님방 에서 초대장이 왔습니다. 입장하시겠습니까?')
+        reply = messagebox.askquestion('초대장', f'{nickname}님이 초대장을 보냈습니다. 입장하시겠습니까?')
         if reply == 'yes':
             self.reset_member_button()
             self.send_command('/request_port', nickname)
@@ -475,10 +475,10 @@ class MainWindow(QWidget, qt_ui):
         else:
             self.send_command('/show_member', [f'{self.invitation_preparation}', port])
 
-    # 초대하기
+    # 초대하기(초대 닉네임, 초대하는 ip)
     def invitation(self, user):
         if not self.game_state:
-            self.send_command('/invitation', [user, self.constructor])
+            self.send_command('/invitation', [user, socket.gethostbyname(socket.gethostname())])
 
     # 초대 거절 알림
     def refuse(self):
