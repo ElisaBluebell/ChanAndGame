@@ -136,6 +136,7 @@ class MainServer:
     def select_same_port_user(self, s):
         same_port_user = []
         for sock in self.chat_list:
+            print(self.chat_list)
             if sock.getsockname()[1] == s.getsockname()[1]:
                 same_port_user.append(sock)
 
