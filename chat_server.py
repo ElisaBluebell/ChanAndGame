@@ -45,7 +45,7 @@ class MainServer:
         self.append_socket_list()
 
         # 채팅 소켓 초기 설정 함수 호출, 9001번 포트부터 9100번 포트까지 사용
-        self.initialize_chat_socket(9001, 9101)
+        self.initialize_chat_socket()
         # 포트 번호를 알림
         print(f'접속 대기중 {self.port}...')
 

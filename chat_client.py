@@ -589,7 +589,7 @@ class MainWindow(QWidget, qt_ui):
 
     # 입력된 질문 보여 주기
     def show_question_list(self, question):
-        self.question.addItem(question)
+        self.question_list.addItem(question)
 
     # 출제자 답편 활성화
     def answer_set(self):
